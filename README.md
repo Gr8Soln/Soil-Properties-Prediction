@@ -8,6 +8,7 @@ An end-to-end machine learning pipeline for predicting soil shear strength param
 ## 🎯 Project Overview
 
 This suite predicts two critical geotechnical parameters:
+
 - **Angle of Internal Friction (φ)** - Measures soil's resistance to shearing
 - **Undrained Cohesion (Cu)** - Measures soil's shear strength under undrained conditions
 
@@ -18,24 +19,21 @@ The pipeline processes 10 disparate borehole datasets, applies geotechnical doma
 ## 📦 Project Structure
 
 ```
-geotechnical-ml-suite/
+Soil-Properties-Prediction/
 │
-├── borehole_merger.py              # Phase 1: Data unification script
-├── Data_Cleaning.ipynb             # Phase 2: Geotechnical cleaning logic
-├── Feature_Engineering.ipynb       # Phase 3: Advanced feature derivation
-├── Comparative_Analysis.ipynb      # Phase 4: ML modeling & evaluation
+├── datasets_merger.py              # Phase 1: Data unification script
+├── README.md
 ├── requirements.txt                # Python dependencies
+├── datasets/                       # Input Excel files (.xlsx)
+├── notebooks/
+│   ├── Data_Cleaning.ipynb         # Phase 2: Geotechnical cleaning logic
+│   ├── Feature_Engineering.ipynb   # Phase 3: Advanced feature derivation
+│   ├── Comparative_Analysis.ipynb  # Phase 4: ML modeling & evaluation
+│   └── geotechnical_analysis.ipynb
 │
 ├── geotechnical_master_raw.csv     # Output from Phase 1
 ├── geotechnical_cleaned.csv        # Output from Phase 2
-├── geotechnical_engineered.csv     # Output from Phase 3
-│
-└── models/                         # Trained models (Phase 4 output)
-    ├── model_random_forest.pkl
-    ├── model_xgboost.pkl
-    ├── model_svr.pkl
-    ├── model_scaler.pkl
-    └── feature_names.pkl
+└── geotechnical_engineered.csv     # Output from Phase 3
 ```
 
 ---
@@ -46,8 +44,13 @@ geotechnical-ml-suite/
 
 ```bash
 # Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python -m venv .venv
+
+# Activate (Windows PowerShell)
+.venv\Scripts\Activate.ps1
+
+# Activate (Git Bash)
+source .venv/Scripts/activate
 
 # Install dependencies
 pip install -r requirements.txt
@@ -55,13 +58,15 @@ pip install -r requirements.txt
 
 ### 2. Prepare Your Data
 
-Place your borehole CSV files in `/mnt/user-data/uploads/`:
-- `geotechnical_data_0.csv`
-- `geotechnical_data_1.csv`
+Place your borehole Excel files in `datasets/`:
+
+- `geotechnical_data_0.xlsx`
+- `geotechnical_data_1.xlsx`
 - ...
-- `geotechnical_data_9.csv`
+- `geotechnical_data_9.xlsx`
 
 **Required columns** (names can vary - script handles mapping):
+
 - Atterberg Limits: `LL`, `PL`, `PI`
 - Fines Content: `Fines_Content` or `Grain_75um`
 - Unit Weight: `Unit_Weight` or `Bulk_Density`
@@ -70,16 +75,21 @@ Place your borehole CSV files in `/mnt/user-data/uploads/`:
 ### 3. Run the Pipeline
 
 #### Phase 1: Data Merging
+
 ```bash
-python borehole_merger.py
+python datasets_merger.py
 ```
+
 **Output:** `geotechnical_master_raw.csv`
 
 #### Phase 2: Data Cleaning
+
 ```bash
-jupyter notebook Data_Cleaning.ipynb
+jupyter notebook notebooks/Data_Cleaning.ipynb
 ```
+
 **Key operations:**
+
 - Atterberg consistency validation ($PI = LL - PL$)
 - Non-plastic soil handling
 - Physical boundary outlier removal
@@ -88,10 +98,13 @@ jupyter notebook Data_Cleaning.ipynb
 **Output:** `geotechnical_cleaned.csv`
 
 #### Phase 3: Feature Engineering
+
 ```bash
-jupyter notebook Feature_Engineering.ipynb
+jupyter notebook notebooks/Feature_Engineering.ipynb
 ```
+
 **Derived features:**
+
 - Liquidity Index: $LI = \frac{W_n - PL}{LL - PL}$
 - Synthetic CPT from SPT: $q_c \approx 0.4 \times N$ (cohesive), $0.6 \times N$ (granular)
 - Activity Ratio, Consistency Index
@@ -99,15 +112,19 @@ jupyter notebook Feature_Engineering.ipynb
 **Output:** `geotechnical_engineered.csv`
 
 #### Phase 4: Model Training & Comparison
+
 ```bash
-jupyter notebook Comparative_Analysis.ipynb
+jupyter notebook notebooks/Comparative_Analysis.ipynb
 ```
+
 **Models evaluated:**
+
 1. **Random Forest** - Ensemble baseline
 2. **XGBoost** - Gradient boosting precision
 3. **SVR (RBF Kernel)** - Non-linear kernel method
 
 **Outputs:**
+
 - Performance metrics (R², MAE, RMSE)
 - Actual vs. Predicted plots
 - Feature importance rankings
@@ -118,18 +135,21 @@ jupyter notebook Comparative_Analysis.ipynb
 ## 📊 Expected Results
 
 ### Model Performance Benchmarks
+
 Based on typical geotechnical datasets:
 
-| Model          | φ (R²) | Cu (R²) | Training Time |
-|----------------|--------|---------|---------------|
-| Random Forest  | 0.75+  | 0.70+   | Fast          |
-| XGBoost        | 0.80+  | 0.75+   | Medium        |
-| SVR (RBF)      | 0.65+  | 0.65+   | Slow          |
+| Model         | φ (R²) | Cu (R²) | Training Time |
+| ------------- | ------ | ------- | ------------- |
+| Random Forest | 0.75+  | 0.70+   | Fast          |
+| XGBoost       | 0.80+  | 0.75+   | Medium        |
+| SVR (RBF)     | 0.65+  | 0.65+   | Slow          |
 
-*Note: Actual performance depends on data quality and completeness.*
+_Note: Actual performance depends on data quality and completeness._
 
 ### Top Predictive Features
+
 Typically include:
+
 1. Liquidity Index (LI)
 2. Plasticity Index (PI)
 3. CPT resistance (qc)
@@ -177,12 +197,15 @@ print(f"Predicted Cu: {cu:.2f} kPa")
 ## 🧪 Validation Strategy
 
 ### 5-Fold Cross-Validation
+
 All models undergo rigorous 5-fold CV to ensure:
+
 - Generalization to unseen data
 - Robustness against overfitting
 - Stable performance metrics
 
 ### Geotechnical Domain Validation
+
 - Physical boundary enforcement (φ: 0-50°, Cu: 0-500 kPa)
 - Atterberg consistency checks
 - Unit standardization to SI conventions
@@ -204,17 +227,19 @@ All models undergo rigorous 5-fold CV to ensure:
 
 ### Common Issues
 
-**Issue:** `FileNotFoundError` when running `borehole_merger.py`  
-**Solution:** Ensure CSV files are in `/mnt/user-data/uploads/` with correct naming pattern.
+**Issue:** `FileNotFoundError` when running `datasets_merger.py`  
+**Solution:** Ensure Excel files are in `datasets/` with naming pattern `geotechnical_data_*.xlsx`.
 
 **Issue:** Low R² scores  
-**Solution:** 
+**Solution:**
+
 - Check target variable completeness (need sufficient non-null samples)
 - Verify feature quality (too many missing values degrade performance)
 - Consider feature selection (remove low-correlation features)
 
 **Issue:** Model training is very slow  
 **Solution:**
+
 - Reduce `n_estimators` for RF/XGBoost
 - Use smaller dataset for prototyping
 - Enable parallel processing: `n_jobs=-1`
@@ -229,13 +254,15 @@ All models undergo rigorous 5-fold CV to ensure:
 $$LI = \frac{W_n - PL}{LL - PL}$$
 
 **SPT-CPT Correlations:**
+
 - Cohesive soils: $q_c \approx 0.4 \times N$ (MPa)
 - Granular soils: $q_c \approx 0.6 \times N$ (MPa)
 
 ### Literature
-- Terzaghi, K., Peck, R. B., & Mesri, G. (1996). *Soil Mechanics in Engineering Practice*.
-- Robertson, P. K. (2009). *Interpretation of cone penetration tests—a unified approach*.
-- Kulhawy, F. H., & Mayne, P. W. (1990). *Manual on estimating soil properties for foundation design*.
+
+- Terzaghi, K., Peck, R. B., & Mesri, G. (1996). _Soil Mechanics in Engineering Practice_.
+- Robertson, P. K. (2009). _Interpretation of cone penetration tests—a unified approach_.
+- Kulhawy, F. H., & Mayne, P. W. (1990). _Manual on estimating soil properties for foundation design_.
 
 ---
 
