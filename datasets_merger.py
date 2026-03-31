@@ -1,25 +1,8 @@
-#!/usr/bin/env python3
-"""
-Borehole Data Merger
-====================
-Automated pipeline for ingesting and unifying disparate geotechnical borehole datasets.
-
-Purpose:
-    - Load multiple CSV files with varying schemas
-    - Standardize column naming conventions
-    - Maintain data lineage through source tracking
-    - Export unified raw dataset for downstream processing
-
-Author: Senior ML Engineer
-Project: Geotechnical Shear Strength Predictive Suite
-"""
+import logging
+from pathlib import Path
+from typing import List, Optional
 
 import pandas as pd
-import glob
-import os
-from pathlib import Path
-from typing import List, Dict
-import logging
 
 # Configure logging
 logging.basicConfig(
@@ -29,7 +12,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class BoreholeDataMerger:
+class DatasetsMerger:
     """
     Unified data ingestion system for geotechnical borehole reports.
     
@@ -39,14 +22,16 @@ class BoreholeDataMerger:
         - Quality assurance logging
     """
     
-    def __init__(self, data_directory: str = "/mnt/user-data/uploads"):
+    def __init__(self, data_directory: Optional[str] = None):
         """
         Initialize the merger with source data location.
         
         Args:
-            data_directory: Path containing geotechnical_data_*.csv files
+            data_directory: Path containing source .xlsx files.
+                Defaults to ./datasets relative to this script.
         """
-        self.data_directory = Path(data_directory)
+        project_root = Path(__file__).resolve().parent
+        self.data_directory = Path(data_directory) if data_directory else (project_root / "datasets")
         self.raw_dataframes: List[pd.DataFrame] = []
         self.unified_dataframe: pd.DataFrame = None
         
@@ -122,22 +107,25 @@ class BoreholeDataMerger:
     
     def discover_files(self) -> List[Path]:
         """
-        Locate all geotechnical data files matching the standard pattern.
+        Locate all .xlsx files in the configured data directory (recursive).
         
         Returns:
-            List of Path objects for discovered CSV files
+            List of Path objects for discovered Excel files
         """
-        pattern = str(self.data_directory / "geotechnical_data_[0-9].csv")
-        files = sorted(glob.glob(pattern))
-        
+        if not self.data_directory.exists():
+            logger.warning(f"Data directory does not exist: {self.data_directory}")
+            return []
+
+        files = sorted(
+            [p for p in self.data_directory.rglob("*") if p.is_file() and p.suffix.lower() == ".xlsx"],
+            key=lambda p: str(p).lower()
+        )
+
         if not files:
-            logger.warning(f"No files found matching pattern: {pattern}")
-            # Fallback: try broader pattern
-            pattern_alt = str(self.data_directory / "geotechnical_data_*.csv")
-            files = sorted(glob.glob(pattern_alt))
+            logger.warning(f"No .xlsx files found in: {self.data_directory}")
         
         logger.info(f"Discovered {len(files)} borehole dataset(s)")
-        return [Path(f) for f in files]
+        return files
     
     def standardize_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -194,8 +182,8 @@ class BoreholeDataMerger:
         
         if not files:
             raise FileNotFoundError(
-                "No geotechnical data files found. "
-                "Please ensure files are named geotechnical_data_0.csv through geotechnical_data_9.csv"
+                "No .xlsx geotechnical data files found. "
+                f"Please place Excel files under: {self.data_directory}"
             )
         
         all_data = []
@@ -205,7 +193,7 @@ class BoreholeDataMerger:
                 logger.info(f"Processing: {file_path.name}")
                 
                 # Load raw data
-                df_raw = pd.read_csv(file_path)
+                df_raw = pd.read_excel(file_path)
                 logger.info(f"  Loaded {len(df_raw)} records with {len(df_raw.columns)} columns")
                 
                 # Standardize schema
@@ -237,15 +225,19 @@ class BoreholeDataMerger:
         
         return self.unified_dataframe
     
-    def export_master_dataset(self, output_path: str = "/home/claude/geotechnical_master_raw.csv"):
+    def export_master_dataset(self, output_path: Optional[str] = None):
         """
         Save the unified dataset to CSV.
         
         Args:
-            output_path: Destination file path
+            output_path: Destination file path. Defaults to
+                ./geotechnical_master_raw.csv at project root.
         """
         if self.unified_dataframe is None:
             raise RuntimeError("No data to export. Run ingest_and_merge() first.")
+
+        if output_path is None:
+            output_path = str(Path(__file__).resolve().parent / "geotechnical_master_raw.csv")
         
         self.unified_dataframe.to_csv(output_path, index=False)
         logger.info(f"✓ Exported master dataset to: {output_path}")
@@ -278,17 +270,10 @@ class BoreholeDataMerger:
 
 
 def main():
-    """
-    Main execution function.
+    merger = DatasetsMerger()
     
-    This script can be run standalone or imported as a module.
-    """
-    # Initialize merger
-    merger = BoreholeDataMerger()
-    
-    # Execute pipeline
     try:
-        unified_data = merger.ingest_and_merge()
+        merger.ingest_and_merge()
         merger.export_master_dataset()
         
         print("\n" + "="*60)
