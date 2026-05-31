@@ -23,3 +23,8 @@ xlrd>=2.0.0      # Legacy Excel support
 # Optional but recommended
 joblib>=1.2.0    # Model serialization
 tqdm>=4.64.0     # Progress bars
+
+# FastAPI inference service
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.0.0
