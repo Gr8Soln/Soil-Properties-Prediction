@@ -5,7 +5,6 @@ import {
   Line,
   ResponsiveContainer,
   Scatter,
-  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -13,14 +12,21 @@ import {
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartCard } from "./ChartCard";
-import type { PredictResponse } from "@/lib/predict-api";
 
 const axis = { fontSize: 11, fill: "var(--color-muted-foreground)" } as const;
 const grid = "var(--color-border)";
 
-export function ChartTabs({ data }: { data: PredictResponse["charts"] }) {
-  const max = Math.max(...data.actual_vs_predicted.flatMap((d) => [d.actual, d.predicted]));
-  const refLine = Array.from({ length: 2 }, (_, i) => ({ x: i * max, y: i * max }));
+interface ChartTabsData {
+  feature_importance: Array<{ name: string; value: number }>;
+  distribution: Array<{ name: string; value: number }>;
+  actual_vs_predicted: Array<{ actual: number; predicted: number }>;
+}
+
+export function ChartTabs({ data }: { data: ChartTabsData }) {
+  const max = Math.max(
+    ...data.actual_vs_predicted.flatMap((point) => [point.actual, point.predicted]),
+  );
+  const refLine = Array.from({ length: 2 }, (_, index) => ({ x: index * max, y: index * max }));
 
   return (
     <Tabs defaultValue="importance" className="w-full">
@@ -31,7 +37,10 @@ export function ChartTabs({ data }: { data: PredictResponse["charts"] }) {
       </TabsList>
 
       <TabsContent value="importance" className="mt-4">
-        <ChartCard title="Feature Importance" description="Relative contribution of each input feature.">
+        <ChartCard
+          title="Feature Importance"
+          description="Relative contribution of each input feature."
+        >
           <ResponsiveContainer>
             <BarChart data={data.feature_importance} layout="vertical" margin={{ left: 20 }}>
               <CartesianGrid stroke={grid} horizontal={false} />
@@ -51,7 +60,10 @@ export function ChartTabs({ data }: { data: PredictResponse["charts"] }) {
       </TabsContent>
 
       <TabsContent value="distribution" className="mt-4">
-        <ChartCard title="Dataset Distribution" description="Sample count per bin from the training set.">
+        <ChartCard
+          title="Dataset Distribution"
+          description="Sample count per bin from the training set."
+        >
           <ResponsiveContainer>
             <BarChart data={data.distribution}>
               <CartesianGrid stroke={grid} vertical={false} />
@@ -71,7 +83,10 @@ export function ChartTabs({ data }: { data: PredictResponse["charts"] }) {
       </TabsContent>
 
       <TabsContent value="avp" className="mt-4">
-        <ChartCard title="Actual vs Predicted" description="Validation scatter against the 1:1 reference line.">
+        <ChartCard
+          title="Actual vs Predicted"
+          description="Validation scatter against the 1:1 reference line."
+        >
           <ResponsiveContainer>
             <ComposedChart>
               <CartesianGrid stroke={grid} />

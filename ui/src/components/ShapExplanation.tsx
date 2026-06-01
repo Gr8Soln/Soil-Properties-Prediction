@@ -4,12 +4,9 @@ import {
   CartesianGrid,
   Cell,
   ResponsiveContainer,
-  Scatter,
-  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
-  ZAxis,
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartCard } from "./ChartCard";
@@ -20,143 +17,159 @@ const grid = "var(--color-border)";
 const POS = "var(--color-chart-1)";
 const NEG = "var(--color-destructive)";
 
-function WaterfallChart({ data, unit }: { data: ShapTarget; unit: string }) {
-  const sorted = [...data.local].sort((a, b) => Math.abs(b.shap) - Math.abs(a.shap));
-  const final = data.base_value + sorted.reduce((s, d) => s + d.shap, 0);
-  const rows = sorted.map((d) => ({
-    name: `${d.feature} = ${d.value}`,
-    shap: d.shap,
-  }));
-
+function ContributionTable({ data }: { data: ShapTarget }) {
   return (
-    <div className="space-y-3">
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>Base value: <span className="font-mono text-foreground">{data.base_value.toFixed(2)} {unit}</span></span>
-        <span>Final prediction: <span className="font-mono text-foreground">{final.toFixed(2)} {unit}</span></span>
-      </div>
-      <div className="h-72 w-full">
-        <ResponsiveContainer>
-          <BarChart data={rows} layout="vertical" margin={{ left: 40 }}>
-            <CartesianGrid stroke={grid} horizontal={false} />
-            <XAxis type="number" tick={axis} stroke={grid} />
-            <YAxis type="category" dataKey="name" tick={axis} stroke={grid} width={150} />
-            <Tooltip
-              contentStyle={{ background: "var(--color-popover)", border: `1px solid ${grid}`, fontSize: 12 }}
-              formatter={(v: any) => [`${Number(v) > 0 ? "+" : ""}${Number(v).toFixed(3)} ${unit}`, "SHAP"]}
-            />
-            <Bar dataKey="shap" radius={[0, 2, 2, 0]}>
-              {rows.map((r, i) => (
-                <Cell key={i} fill={r.shap >= 0 ? POS : NEG} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+    <div className="overflow-hidden rounded-md border border-border">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/50 text-foreground">
+          <tr>
+            <th className="px-3 py-2 text-left font-medium">Rank</th>
+            <th className="px-3 py-2 text-left font-medium">Feature</th>
+            <th className="px-3 py-2 text-right font-medium">Value</th>
+            <th className="px-3 py-2 text-right font-medium">SHAP Contribution</th>
+            <th className="px-3 py-2 text-left font-medium">Impact</th>
+          </tr>
+        </thead>
+        <tbody className="text-muted-foreground">
+          {data.features.map((row) => (
+            <tr key={`${row.rank}-${row.feature}`} className="border-t border-border">
+              <td className="px-3 py-2 text-foreground">{row.rank}</td>
+              <td className="px-3 py-2 font-mono text-xs text-foreground">{row.feature}</td>
+              <td className="px-3 py-2 text-right">{row.value.toFixed(3)}</td>
+              <td
+                className={
+                  row.shap_value >= 0
+                    ? "px-3 py-2 text-right text-emerald-600"
+                    : "px-3 py-2 text-right text-destructive"
+                }
+              >
+                {row.shap_value >= 0 ? "+" : ""}
+                {row.shap_value.toFixed(4)}
+              </td>
+              <td className="px-3 py-2 capitalize">{row.impact}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function GlobalChart({ data, unit }: { data: ShapTarget; unit: string }) {
+function BarImportance({ data }: { data: ShapTarget }) {
   return (
-    <div className="h-72 w-full">
+    <ChartCard
+      title="SHAP Bar Data"
+      description="Features ranked by absolute contribution magnitude."
+    >
       <ResponsiveContainer>
-        <BarChart data={data.global} layout="vertical" margin={{ left: 30 }}>
+        <BarChart data={data.bar.slice(0, 10)} layout="vertical" margin={{ left: 40 }}>
           <CartesianGrid stroke={grid} horizontal={false} />
           <XAxis type="number" tick={axis} stroke={grid} />
-          <YAxis type="category" dataKey="feature" tick={axis} stroke={grid} width={130} />
+          <YAxis type="category" dataKey="feature" tick={axis} stroke={grid} width={140} />
           <Tooltip
-            contentStyle={{ background: "var(--color-popover)", border: `1px solid ${grid}`, fontSize: 12 }}
-            formatter={(v: any) => [`${Number(v).toFixed(3)} ${unit}`, "mean(|SHAP|)"]}
+            contentStyle={{
+              background: "var(--color-popover)",
+              border: `1px solid ${grid}`,
+              fontSize: 12,
+            }}
+            formatter={(value: number) => [Number(value).toFixed(4), "abs(SHAP)"]}
           />
-          <Bar dataKey="mean_abs_shap" fill="var(--color-chart-2)" radius={[0, 2, 2, 0]} />
+          <Bar dataKey="value" fill="var(--color-chart-2)" radius={[0, 2, 2, 0]} />
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartCard>
   );
 }
 
-function BeeswarmChart({ data, unit }: { data: ShapTarget; unit: string }) {
-  const features = data.global.map((g) => g.feature);
+function WaterfallData({ data }: { data: ShapTarget }) {
   return (
-    <div className="h-80 w-full">
+    <ChartCard
+      title="Waterfall Data"
+      description={`Base value ${data.base_value.toFixed(3)}; estimate ${data.summary.prediction_estimate.toFixed(3)}.`}
+    >
       <ResponsiveContainer>
-        <ScatterChart margin={{ left: 30, right: 16, top: 8, bottom: 8 }}>
-          <CartesianGrid stroke={grid} />
-          <XAxis type="number" dataKey="shap" name="SHAP" tick={axis} stroke={grid} />
-          <YAxis
-            type="category"
-            dataKey="feature"
-            tick={axis}
-            stroke={grid}
-            width={130}
-            domain={features}
-          />
-          <ZAxis type="number" dataKey="feature_value" range={[40, 120]} name="Feature value" />
+        <BarChart data={data.waterfall} layout="vertical" margin={{ left: 40 }}>
+          <CartesianGrid stroke={grid} horizontal={false} />
+          <XAxis type="number" tick={axis} stroke={grid} />
+          <YAxis type="category" dataKey="feature" tick={axis} stroke={grid} width={140} />
           <Tooltip
-            cursor={{ strokeDasharray: "3 3" }}
-            contentStyle={{ background: "var(--color-popover)", border: `1px solid ${grid}`, fontSize: 12 }}
-            formatter={(v: any, n: any) =>
-              n === "SHAP" ? [`${Number(v).toFixed(3)} ${unit}`, n] : [v, n]
-            }
+            contentStyle={{
+              background: "var(--color-popover)",
+              border: `1px solid ${grid}`,
+              fontSize: 12,
+            }}
+            formatter={(value: number) => [
+              `${Number(value) >= 0 ? "+" : ""}${Number(value).toFixed(4)}`,
+              "SHAP",
+            ]}
           />
-          <Scatter data={data.beeswarm} fill="var(--color-chart-1)" fillOpacity={0.55} />
-        </ScatterChart>
+          <Bar dataKey="shap_value" radius={[0, 2, 2, 0]}>
+            {data.waterfall.map((row) => (
+              <Cell key={row.feature} fill={row.shap_value >= 0 ? POS : NEG} />
+            ))}
+          </Bar>
+        </BarChart>
       </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+function Summary({ data, unit }: { data: ShapTarget; unit: string }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-4">
+      <div className="rounded-md border border-border p-3">
+        <p className="text-xs text-muted-foreground">Base value</p>
+        <p className="font-mono text-sm">
+          {data.base_value.toFixed(3)} {unit}
+        </p>
+      </div>
+      <div className="rounded-md border border-border p-3">
+        <p className="text-xs text-muted-foreground">Positive impact</p>
+        <p className="font-mono text-sm text-emerald-600">
+          +{data.summary.total_positive.toFixed(3)}
+        </p>
+      </div>
+      <div className="rounded-md border border-border p-3">
+        <p className="text-xs text-muted-foreground">Negative impact</p>
+        <p className="font-mono text-sm text-destructive">
+          {data.summary.total_negative.toFixed(3)}
+        </p>
+      </div>
+      <div className="rounded-md border border-border p-3">
+        <p className="text-xs text-muted-foreground">SHAP estimate</p>
+        <p className="font-mono text-sm">
+          {data.summary.prediction_estimate.toFixed(3)} {unit}
+        </p>
+      </div>
     </div>
   );
 }
 
-function TargetView({ data, unit, label }: { data: ShapTarget; unit: string; label: string }) {
+function TargetView({ data, unit }: { data: ShapTarget; unit: string }) {
   return (
-    <Tabs defaultValue="waterfall" className="w-full">
-      <TabsList>
-        <TabsTrigger value="waterfall">Local (Waterfall)</TabsTrigger>
-        <TabsTrigger value="global">Global Importance</TabsTrigger>
-        <TabsTrigger value="beeswarm">Beeswarm</TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="waterfall" className="mt-4">
-        <ChartCard
-          title={`${label} — Local Explanation`}
-          description="Each bar shows how a feature pushed this prediction above (positive) or below (negative) the model's base value."
-        >
-          <WaterfallChart data={data} unit={unit} />
-        </ChartCard>
-      </TabsContent>
-
-      <TabsContent value="global" className="mt-4">
-        <ChartCard
-          title={`${label} — Global Feature Importance`}
-          description="Mean absolute SHAP value across the validation set. Higher means the feature has more overall influence on the model."
-        >
-          <GlobalChart data={data} unit={unit} />
-        </ChartCard>
-      </TabsContent>
-
-      <TabsContent value="beeswarm" className="mt-4">
-        <ChartCard
-          title={`${label} — Beeswarm Summary`}
-          description="Distribution of SHAP values per feature across samples. Marker size encodes the underlying feature value."
-        >
-          <BeeswarmChart data={data} unit={unit} />
-        </ChartCard>
-      </TabsContent>
-    </Tabs>
+    <div className="space-y-4">
+      <Summary data={data} unit={unit} />
+      <ContributionTable data={data} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <BarImportance data={data} />
+        <WaterfallData data={data} />
+      </div>
+    </div>
   );
 }
 
-export function ShapExplanation({ data }: { data: NonNullable<PredictResponse["charts"]["shap"]> }) {
+export function ShapExplanation({ data }: { data: PredictResponse["shap"] }) {
   return (
     <Tabs defaultValue="cu" className="w-full">
       <TabsList>
         <TabsTrigger value="cu">CU (kPa)</TabsTrigger>
-        <TabsTrigger value="phi">φ (deg)</TabsTrigger>
+        <TabsTrigger value="phi">Phi (deg)</TabsTrigger>
       </TabsList>
       <TabsContent value="cu" className="mt-4">
-        <TargetView data={data.cu} unit="kPa" label="CU" />
+        <TargetView data={data.cu} unit="kPa" />
       </TabsContent>
       <TabsContent value="phi" className="mt-4">
-        <TargetView data={data.phi} unit="°" label="φ" />
+        <TargetView data={data.phi} unit="deg" />
       </TabsContent>
     </Tabs>
   );

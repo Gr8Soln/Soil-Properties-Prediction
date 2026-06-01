@@ -6,8 +6,9 @@ Two prediction targets are supported:
   - Phi_deg  : Friction angle
 """
 
-from typing import Optional
-from pydantic import BaseModel, Field, model_validator
+from typing import List, Literal
+
+from pydantic import BaseModel, Field
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +64,10 @@ class PhiPredictionRequest(SoilInputBase):
     Gravel_Fraction_pct: float = Field(..., description="Gravel fraction (%)")
 
 
+class UnifiedPredictionRequest(PhiPredictionRequest):
+    """Input payload for predicting and explaining both supported targets."""
+
+
 # ---------------------------------------------------------------------------
 # Shared prediction response
 # ---------------------------------------------------------------------------
@@ -75,6 +80,67 @@ class PredictionResponse(BaseModel):
     model: str = Field(..., description="Name of the model used for prediction")
 
 
+class PredictionValues(BaseModel):
+    cu_kpa: float
+    phi_deg: float
+
+
+class ModelNames(BaseModel):
+    cu: str
+    phi: str
+
+
+class ShapFeatureContribution(BaseModel):
+    feature: str
+    value: float
+    shap_value: float
+    impact: Literal["positive", "negative"]
+    rank: int
+    abs_shap_value: float
+    start: float | None = None
+    end: float | None = None
+
+
+class ShapBarDatum(BaseModel):
+    feature: str
+    value: float
+    shap_value: float
+
+
+class ShapSummary(BaseModel):
+    total_positive: float
+    total_negative: float
+    net_effect: float
+    absolute_sum: float
+    prediction_estimate: float
+
+
+class ShapTargetExplanation(BaseModel):
+    base_value: float
+    features: List[ShapFeatureContribution]
+    positive: List[ShapFeatureContribution]
+    negative: List[ShapFeatureContribution]
+    bar: List[ShapBarDatum]
+    waterfall: List[ShapFeatureContribution]
+    summary: ShapSummary
+
+
+class ShapBundle(BaseModel):
+    cu: ShapTargetExplanation
+    phi: ShapTargetExplanation
+
+
+class UnifiedPredictionResponse(BaseModel):
+    predictions: PredictionValues
+    models: ModelNames
+    shap: ShapBundle
+
+
+class ExplanationResponse(BaseModel):
+    models: ModelNames
+    shap: ShapBundle
+
+
 # ---------------------------------------------------------------------------
 # Health check
 # ---------------------------------------------------------------------------
@@ -83,3 +149,5 @@ class HealthResponse(BaseModel):
     status: str
     cu_model_loaded: bool
     phi_model_loaded: bool
+    cu_explainer_loaded: bool = False
+    phi_explainer_loaded: bool = False

@@ -1,132 +1,80 @@
-"""
-FastAPI application for Soil-Properties-Prediction inference.
-
-Endpoints
----------
-GET  /                   → simple landing message
-GET  /health             → model load status
-POST /predict/cu         → predict Cu_kPa (undrained shear strength)
-POST /predict/phi        → predict Phi_deg (friction angle)
-GET  /model-info/cu      → Cu_kPa model metadata & feature importances
-GET  /model-info/phi     → Phi_deg model metadata & feature importances
-
-Usage
------
-Run from the project root:
-
-    uvicorn app.main:app --reload
-
-Or with Python:
-
-    python -m uvicorn app.main:app --reload
-"""
+"""FastAPI application for soil shear-strength prediction and explanation."""
 
 from __future__ import annotations
 
 import csv
-import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-import joblib
-import numpy as np
-import pandas as pd
 from fastapi import FastAPI, HTTPException, status
-from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
-from app.feature_engineering import build_cu_features, build_phi_features
+from app.model_service import ModelService
 from app.schemas import (
     CuPredictionRequest,
+    ExplanationResponse,
     HealthResponse,
     PhiPredictionRequest,
     PredictionResponse,
+    UnifiedPredictionRequest,
+    UnifiedPredictionResponse,
 )
-
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------------
-
-_HERE = Path(__file__).resolve().parent          # …/app/
-_PROJECT_ROOT = _HERE.parent                     # …/Soil-Properties-Prediction/
+_HERE = Path(__file__).resolve().parent
+_PROJECT_ROOT = _HERE.parent
 _OUTPUTS = _PROJECT_ROOT / "outputs"
 
-_CU_MODEL_PATH = _OUTPUTS / "cu_best_model.joblib"
-_PHI_MODEL_PATH = _OUTPUTS / "phi_best_model.joblib"
 _CU_IMPORTANCE_PATH = _OUTPUTS / "cu_feature_importance.csv"
 _PHI_IMPORTANCE_PATH = _OUTPUTS / "phi_feature_importance.csv"
 _CU_COMPARISON_PATH = _OUTPUTS / "cu_model_comparison.csv"
 _PHI_COMPARISON_PATH = _OUTPUTS / "phi_model_comparison.csv"
 
-# ---------------------------------------------------------------------------
-# Application
-# ---------------------------------------------------------------------------
-
 app = FastAPI(
     title="Soil-Properties-Prediction API",
     description=(
-        "Geotechnical ML inference service.\n\n"
-        "Predicts undrained shear strength (**Cu_kPa**) and friction angle "
-        "(**Phi_deg**) from laboratory soil measurements using trained "
-        "Extra Trees Regressor models."
+        "Geotechnical ML inference service. Predicts undrained shear strength "
+        "(Cu_kPa) and friction angle (Phi_deg) from laboratory soil measurements "
+        "using trained Extra Trees Regressor models with SHAP explanations."
     ),
-    version="1.0.0",
+    version="1.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# ---------------------------------------------------------------------------
-# Model registry – loaded once at startup
-# ---------------------------------------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-_MODELS: Dict[str, Any] = {}
-_MODEL_NAMES: Dict[str, str] = {}
-
-
-def _load_models() -> None:
-    """Load both saved models into the in-process registry."""
-    for key, path in (("cu", _CU_MODEL_PATH), ("phi", _PHI_MODEL_PATH)):
-        if path.exists():
-            try:
-                _MODELS[key] = joblib.load(path)
-                _MODEL_NAMES[key] = type(_MODELS[key]).__name__
-                logger.info("Loaded %s model from %s", key.upper(), path)
-            except Exception as exc:                                   # noqa: BLE001
-                logger.error("Failed to load %s model: %s", key.upper(), exc)
-        else:
-            logger.warning("Model artifact not found: %s", path)
+model_service = ModelService(_OUTPUTS)
 
 
 @app.on_event("startup")
 async def startup_event() -> None:
-    _load_models()
+    model_service.load()
 
-
-# ---------------------------------------------------------------------------
-# Helper utilities
-# ---------------------------------------------------------------------------
 
 def _read_csv_as_records(path: Path) -> List[Dict[str, Any]]:
-    """Return a CSV as a list of row-dicts; empty list if file missing."""
     if not path.exists():
         return []
     with path.open(newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
-        return [
-            {k: _coerce(v) for k, v in row.items()}
-            for row in reader
-        ]
+        return [{key: _coerce(value) for key, value in row.items()} for row in reader]
 
 
 def _coerce(value: str) -> Any:
-    """Try to coerce a CSV string to int → float → str."""
     for cast in (int, float):
         try:
             return cast(value)
@@ -135,26 +83,87 @@ def _coerce(value: str) -> Any:
     return value
 
 
-def _get_model(key: str):
-    """Return a loaded model or raise 503 if unavailable."""
-    model = _MODELS.get(key)
-    if model is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=(
-                f"The {key.upper()} model is not available. "
-                "Check the server logs for details."
-            ),
-        )
-    return model
+def _service_unavailable(exc: RuntimeError) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail=str(exc),
+    )
 
 
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
+def _feature_error(exc: Exception) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail=f"Feature engineering failed: {exc}",
+    )
+
+
+def _models_payload() -> Dict[str, str]:
+    return {
+        "cu": model_service.model_name("cu"),
+        "phi": model_service.model_name("phi"),
+    }
+
+
+def _predict_target(key: str, payload: Dict[str, float]) -> PredictionResponse:
+    try:
+        prediction = model_service.predict_single(key, payload)  # type: ignore[arg-type]
+    except RuntimeError as exc:
+        raise _service_unavailable(exc) from exc
+    except (AssertionError, KeyError, ValueError) as exc:
+        raise _feature_error(exc) from exc
+
+    return PredictionResponse(
+        prediction=round(prediction, 4),
+        target="Cu_kPa" if key == "cu" else "Phi_deg",
+        model=model_service.model_name(key),  # type: ignore[arg-type]
+    )
+
+
+def _predict_and_explain(payload: UnifiedPredictionRequest) -> UnifiedPredictionResponse:
+    raw = payload.model_dump()
+    try:
+        predictions = model_service.predict_all(raw)
+        shap_payload = model_service.explain_all(raw)
+    except RuntimeError as exc:
+        raise _service_unavailable(exc) from exc
+    except (AssertionError, KeyError, ValueError) as exc:
+        raise _feature_error(exc) from exc
+
+    return UnifiedPredictionResponse(
+        predictions=predictions,
+        models=_models_payload(),
+        shap=shap_payload,
+    )
+
+
+def _explain(payload: UnifiedPredictionRequest) -> ExplanationResponse:
+    raw = payload.model_dump()
+    try:
+        shap_payload = model_service.explain_all(raw)
+    except RuntimeError as exc:
+        raise _service_unavailable(exc) from exc
+    except (AssertionError, KeyError, ValueError) as exc:
+        raise _feature_error(exc) from exc
+
+    return ExplanationResponse(
+        models=_models_payload(),
+        shap=shap_payload,
+    )
+
+
+def _model_info(key: str, comparison_path: Path, importance_path: Path) -> Dict[str, Any]:
+    return {
+        "target": "Cu_kPa" if key == "cu" else "Phi_deg",
+        "best_model": model_service.model_name(key),  # type: ignore[arg-type]
+        "model_loaded": model_service.is_model_loaded(key),  # type: ignore[arg-type]
+        "explainer_loaded": model_service.is_explainer_loaded(key),  # type: ignore[arg-type]
+        "cv_comparison": _read_csv_as_records(comparison_path),
+        "feature_importances": _read_csv_as_records(importance_path),
+    }
+
 
 @app.get("/", include_in_schema=False)
-async def root():
+async def root() -> Dict[str, str]:
     return {
         "service": "Soil-Properties-Prediction API",
         "docs": "/docs",
@@ -163,12 +172,13 @@ async def root():
 
 
 @app.get("/health", response_model=HealthResponse, tags=["Monitoring"])
-async def health():
-    """Return the load status of both models."""
+async def health() -> HealthResponse:
     return HealthResponse(
         status="ok",
-        cu_model_loaded="cu" in _MODELS,
-        phi_model_loaded="phi" in _MODELS,
+        cu_model_loaded=model_service.is_model_loaded("cu"),
+        phi_model_loaded=model_service.is_model_loaded("phi"),
+        cu_explainer_loaded=model_service.is_explainer_loaded("cu"),
+        phi_explainer_loaded=model_service.is_explainer_loaded("phi"),
     )
 
 
@@ -178,33 +188,8 @@ async def health():
     tags=["Prediction"],
     summary="Predict undrained shear strength (Cu_kPa)",
 )
-async def predict_cu(payload: CuPredictionRequest):
-    """
-    Predict **undrained shear strength** (Cu_kPa) from raw soil measurements.
-
-    The request body mirrors the columns present in
-    `geotechnical_cu_training_ready.csv`.  Eight additional interaction
-    features are derived internally before calling the model.
-    """
-    model = _get_model("cu")
-
-    # Build feature row as a single-row DataFrame
-    raw = pd.DataFrame([payload.model_dump()])
-    try:
-        X = build_cu_features(raw)
-    except (AssertionError, KeyError, ValueError) as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Feature engineering failed: {exc}",
-        ) from exc
-
-    prediction: float = float(model.predict(X)[0])
-
-    return PredictionResponse(
-        prediction=round(prediction, 4),
-        target="Cu_kPa",
-        model=_MODEL_NAMES.get("cu", "unknown"),
-    )
+async def predict_cu(payload: CuPredictionRequest) -> PredictionResponse:
+    return _predict_target("cu", payload.model_dump())
 
 
 @app.post(
@@ -213,32 +198,28 @@ async def predict_cu(payload: CuPredictionRequest):
     tags=["Prediction"],
     summary="Predict friction angle (Phi_deg)",
 )
-async def predict_phi(payload: PhiPredictionRequest):
-    """
-    Predict **friction angle** (Phi_deg) from raw soil measurements.
+async def predict_phi(payload: PhiPredictionRequest) -> PredictionResponse:
+    return _predict_target("phi", payload.model_dump())
 
-    The request body extends the Cu payload with `Gravel_Fraction_pct`,
-    which is required for the `Gravel_to_Sand_Ratio` interaction term.
-    Seven additional features are derived internally before calling the model.
-    """
-    model = _get_model("phi")
 
-    raw = pd.DataFrame([payload.model_dump()])
-    try:
-        X = build_phi_features(raw)
-    except (AssertionError, KeyError, ValueError) as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Feature engineering failed: {exc}",
-        ) from exc
+@app.post(
+    "/predict",
+    response_model=UnifiedPredictionResponse,
+    tags=["Prediction"],
+    summary="Predict Cu_kPa and Phi_deg with SHAP explanations",
+)
+async def predict(payload: UnifiedPredictionRequest) -> UnifiedPredictionResponse:
+    return _predict_and_explain(payload)
 
-    prediction: float = float(model.predict(X)[0])
 
-    return PredictionResponse(
-        prediction=round(prediction, 4),
-        target="Phi_deg",
-        model=_MODEL_NAMES.get("phi", "unknown"),
-    )
+@app.post(
+    "/explain",
+    response_model=ExplanationResponse,
+    tags=["Explanation"],
+    summary="Explain both model predictions without returning prediction values",
+)
+async def explain(payload: UnifiedPredictionRequest) -> ExplanationResponse:
+    return _explain(payload)
 
 
 @app.get(
@@ -246,20 +227,8 @@ async def predict_phi(payload: PhiPredictionRequest):
     tags=["Model Info"],
     summary="Cu_kPa model metadata and feature importances",
 )
-async def model_info_cu():
-    """
-    Return metadata about the Cu_kPa model including:
-    - Model class name
-    - Cross-validation results for all compared models
-    - Permutation feature importances from the winning model
-    """
-    return {
-        "target": "Cu_kPa",
-        "best_model": _MODEL_NAMES.get("cu", "not loaded"),
-        "model_loaded": "cu" in _MODELS,
-        "cv_comparison": _read_csv_as_records(_CU_COMPARISON_PATH),
-        "feature_importances": _read_csv_as_records(_CU_IMPORTANCE_PATH),
-    }
+async def model_info_cu() -> Dict[str, Any]:
+    return _model_info("cu", _CU_COMPARISON_PATH, _CU_IMPORTANCE_PATH)
 
 
 @app.get(
@@ -267,17 +236,5 @@ async def model_info_cu():
     tags=["Model Info"],
     summary="Phi_deg model metadata and feature importances",
 )
-async def model_info_phi():
-    """
-    Return metadata about the Phi_deg model including:
-    - Model class name
-    - Cross-validation results for all compared models
-    - Permutation feature importances from the winning model
-    """
-    return {
-        "target": "Phi_deg",
-        "best_model": _MODEL_NAMES.get("phi", "not loaded"),
-        "model_loaded": "phi" in _MODELS,
-        "cv_comparison": _read_csv_as_records(_PHI_COMPARISON_PATH),
-        "feature_importances": _read_csv_as_records(_PHI_IMPORTANCE_PATH),
-    }
+async def model_info_phi() -> Dict[str, Any]:
+    return _model_info("phi", _PHI_COMPARISON_PATH, _PHI_IMPORTANCE_PATH)
