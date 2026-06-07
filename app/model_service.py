@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, Literal
 
 import joblib
 import numpy as np
