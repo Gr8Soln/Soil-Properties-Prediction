@@ -89,7 +89,7 @@
 | Layer | Technology | Version |
 |---|---|---|
 | Runtime | React 19 | ^19.2.0 |
-| SSR Framework | TanStack Start | ^1.167.50 |
+| SSR Framework | TanStack Start | 1.168.60 (CVE-2026-102989 patch) |
 | Router | TanStack Router (file-based) | ^1.168.25 |
 | Data Fetching | TanStack React Query | ^5.83.0 |
 | Build | Vite 7 | ^7.3.1 |
