@@ -115,19 +115,18 @@ function Index() {
           <h2 className="text-2xl font-semibold tracking-tight">Project Overview</h2>
           <div className="mt-6 space-y-4 text-sm leading-relaxed text-muted-foreground md:text-base">
             <p>
-              Soil characterization is a critical stage in geotechnical engineering, influencing
-              the design and safety of foundations, retaining structures, and earthworks. However,
+              Soil characterization is a critical stage in geotechnical engineering, influencing the
+              design and safety of foundations, retaining structures, and earthworks. However,
               laboratory determination of shear strength parameters can be time-consuming, costly,
               and constrained by limited testing resources. This project presents a machine
-              learning-based approach for predicting two key soil parameters—undrained cohesion
-              (CU) and the angle of internal friction (φ)—using routinely measured soil index
-              properties.
+              learning-based approach for predicting two key soil parameters—undrained cohesion (CU)
+              and the angle of internal friction (φ)—using routinely measured soil index properties.
             </p>
             <p>
-              The proposed system is developed as part of an academic research study and is
-              designed to provide reliable predictive support for preliminary geotechnical
-              assessment, while maintaining transparency through performance visualization and
-              interpretability outputs.
+              The proposed system is developed as part of an academic research study and is designed
+              to provide reliable predictive support for preliminary geotechnical assessment, while
+              maintaining transparency through performance visualization and interpretability
+              outputs.
             </p>
           </div>
         </div>
@@ -178,10 +177,10 @@ function Index() {
               Accurate estimation of soil shear strength parameters is fundamental to geotechnical
               engineering design and stability assessment. Traditional laboratory testing
               procedures, while reliable, are often resource-intensive and may limit rapid
-              evaluation during early project stages. This study explores the application of
-              machine learning regression techniques for predicting undrained cohesion (CU) and
-              the angle of internal friction (φ) using soil index properties and engineered
-              geotechnical features.
+              evaluation during early project stages. This study explores the application of machine
+              learning regression techniques for predicting undrained cohesion (CU) and the angle of
+              internal friction (φ) using soil index properties and engineered geotechnical
+              features.
             </p>
             <p>
               The proposed approach integrates data preprocessing, feature engineering, and model
@@ -237,8 +236,8 @@ function Index() {
           <h2 className="text-2xl font-semibold tracking-tight">Begin a Prediction Session</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
             Use the prediction interface to input soil parameters and generate CU and φ estimates
-            instantly. Results are accompanied by supporting charts to enhance interpretability
-            and academic reporting.
+            instantly. Results are accompanied by supporting charts to enhance interpretability and
+            academic reporting.
           </p>
           <div className="mt-6">
             <Button asChild size="lg">

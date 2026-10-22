@@ -16,7 +16,11 @@ export const Route = createFileRoute("/docs")({
 
 const inputs = [
   ["Liquid Limit (LL)", "%", "Water content at the boundary between liquid and plastic states."],
-  ["Plastic Limit (PL)", "%", "Water content at the boundary between plastic and semi-solid states."],
+  [
+    "Plastic Limit (PL)",
+    "%",
+    "Water content at the boundary between plastic and semi-solid states.",
+  ],
   ["Plasticity Index (PI)", "%", "PI = LL − PL. Indicates the soil's plasticity range."],
   ["Moisture Content (MC)", "%", "In-situ water content of the sample."],
   ["Bulk Density", "g/cm³", "Total mass per unit volume of the soil sample."],
@@ -39,7 +43,9 @@ function DocsPage() {
         <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
           <li>Open the Predict page from the navigation bar.</li>
           <li>Enter your soil index properties in the input form.</li>
-          <li>Click <span className="font-medium text-foreground">Predict</span> to compute CU and φ.</li>
+          <li>
+            Click <span className="font-medium text-foreground">Predict</span> to compute CU and φ.
+          </li>
           <li>Review the result cards, warnings, and diagnostic charts below.</li>
         </ol>
       </section>
@@ -71,12 +77,12 @@ function DocsPage() {
       <section className="mt-10 space-y-3">
         <h2 className="text-xl font-semibold tracking-tight">Outputs</h2>
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">CU (kPa)</span> — Undrained cohesion of the soil,
-          a key parameter for short-term stability of saturated cohesive soils.
+          <span className="font-medium text-foreground">CU (kPa)</span> — Undrained cohesion of the
+          soil, a key parameter for short-term stability of saturated cohesive soils.
         </p>
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">φ (degrees)</span> — Angle of internal friction,
-          governing the shear strength contribution from particle interlock and friction.
+          <span className="font-medium text-foreground">φ (degrees)</span> — Angle of internal
+          friction, governing the shear strength contribution from particle interlock and friction.
         </p>
       </section>
 

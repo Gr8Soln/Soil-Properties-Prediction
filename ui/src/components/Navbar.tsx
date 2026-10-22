@@ -24,7 +24,9 @@ export function Navbar() {
               key={l.to}
               to={l.to}
               className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              activeProps={{ className: "rounded-md px-3 py-1.5 text-sm text-foreground bg-accent" }}
+              activeProps={{
+                className: "rounded-md px-3 py-1.5 text-sm text-foreground bg-accent",
+              }}
               activeOptions={{ exact: l.to === "/" }}
             >
               {l.label}

@@ -6,7 +6,8 @@ export const Route = createFileRoute("/research")({
       { title: "Research Summary — Soil Properties Prediction" },
       {
         name: "description",
-        content: "Methodology, dataset, models, and validation metrics for the CU and φ prediction system.",
+        content:
+          "Methodology, dataset, models, and validation metrics for the CU and φ prediction system.",
       },
     ],
   }),
@@ -26,7 +27,9 @@ function ResearchPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
       <header className="mb-10 border-b border-border pb-6">
-        <p className="text-xs font-medium uppercase tracking-widest text-primary">Research Summary</p>
+        <p className="text-xs font-medium uppercase tracking-widest text-primary">
+          Research Summary
+        </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">
           Machine Learning Prediction of Undrained Cohesion and Angle of Internal Friction
         </h1>
@@ -41,20 +44,21 @@ function ResearchPage() {
           We present a supervised machine learning framework that estimates two key shear-strength
           parameters of soil — undrained cohesion (CU) and angle of internal friction (φ) — directly
           from index properties commonly obtained in routine laboratory testing. The system aims to
-          accelerate preliminary geotechnical assessments while maintaining engineering interpretability.
+          accelerate preliminary geotechnical assessments while maintaining engineering
+          interpretability.
         </Section>
 
         <Section title="Methodology">
-          Inputs include Atterberg limits, moisture content, bulk density, specific gravity, and depth.
-          The pipeline performs outlier removal, standard scaling, and stratified train-test splits
-          before training gradient-boosted regressors and random forests. Hyperparameters are tuned
-          via k-fold cross-validation.
+          Inputs include Atterberg limits, moisture content, bulk density, specific gravity, and
+          depth. The pipeline performs outlier removal, standard scaling, and stratified train-test
+          splits before training gradient-boosted regressors and random forests. Hyperparameters are
+          tuned via k-fold cross-validation.
         </Section>
 
         <Section title="Dataset Description">
-          The dataset aggregates published geotechnical investigations and in-house records, comprising
-          over 1,200 samples spanning cohesive and granular soils. Distributions and missingness are
-          reported in the supplementary documentation.
+          The dataset aggregates published geotechnical investigations and in-house records,
+          comprising over 1,200 samples spanning cohesive and granular soils. Distributions and
+          missingness are reported in the supplementary documentation.
         </Section>
 
         <Section title="Models Used">
@@ -96,8 +100,8 @@ function ResearchPage() {
 
         <Section title="Limitations">
           Predictions extrapolate poorly outside the training distribution; users should treat
-          warnings on the prediction page seriously. The dataset under-represents organic and
-          highly plastic soils.
+          warnings on the prediction page seriously. The dataset under-represents organic and highly
+          plastic soils.
         </Section>
 
         <Section title="Future Work">
