@@ -120,7 +120,7 @@ export function GaugeCard({
             </div>
             <p className="text-sm font-medium text-muted-foreground">Awaiting Prediction</p>
             <p className="text-xs text-muted-foreground/70 mt-1 max-w-[200px]">
-              Fill in borehole parameters and click predict to calculate {label}.
+              Fill in laboratory index parameters and click predict to calculate {label}.
             </p>
           </div>
         ) : (

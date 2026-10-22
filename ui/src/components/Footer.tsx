@@ -18,7 +18,7 @@ export function Footer() {
             </div>
             <p className="text-muted-foreground leading-relaxed text-[11px]">
               Advanced machine learning framework for predicting Undrained Cohesion (Cu) and
-              Internal Friction Angle (φ) from borehole index properties with SHAP explainability.
+              Internal Friction Angle (φ) from laboratory index properties with SHAP explainability.
             </p>
             <div className="flex items-center gap-2 pt-1 font-mono text-[10px]">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
