@@ -60,10 +60,8 @@
 │                                                                  │
 │  TanStack Start (SSR) + React 19 + Vite 7                       │
 │     │                                                            │
-│     ├── routes/index.tsx ........... Landing page                 │
-│     ├── routes/predict.tsx ......... Prediction form + results   │
-│     ├── routes/research.tsx ........ Research summary page        │
-│     ├── routes/docs.tsx ............ Documentation page           │
+│     ├── routes/index.tsx ........... Landing page & Research Hub  │
+│     └── routes/predict.tsx ......... Prediction Suite & SHAP      │
 │     │                                                            │
 │     ├── lib/predict-api.ts ......... API client (fetch wrapper)  │
 │     ├── components/ ................ Custom + shadcn/ui           │
@@ -179,10 +177,8 @@ Soil-Properties-Prediction/
 │       │
 │       ├── routes/                   # File-based routing
 │       │   ├── __root.tsx            # Root layout (Navbar + Outlet + Footer)
-│       │   ├── index.tsx             # Landing page (hero, features, workflow, CTA)
-│       │   ├── predict.tsx           # Prediction form + results + SHAP + visuals
-│       │   ├── research.tsx          # Research summary (methodology, metrics)
-│       │   └── docs.tsx              # Documentation (usage guide, input table)
+│       │   ├── index.tsx             # Landing page (hero, benchmarks, feature pipeline, CTA)
+│       │   └── predict.tsx           # Prediction form + gauge results + SHAP + visuals
 │       │
 │       ├── components/               # Custom components
 │       │   ├── AlertBox.tsx          # Warning/info/success alert (lucide icons)
@@ -324,10 +320,8 @@ Both pipelines assert:
 
 | Path | File | Purpose |
 |---|---|---|
-| `/` | `routes/index.tsx` | Landing page — hero, feature cards, workflow steps, research abstract, chart previews, CTA |
-| `/predict` | `routes/predict.tsx` | Prediction interface — form, result cards, SHAP explanation, training visuals |
-| `/research` | `routes/research.tsx` | Research summary — abstract, methodology, dataset, models, metrics, limitations |
-| `/docs` | `routes/docs.tsx` | Documentation — usage guide, input parameter table, output descriptions, disclaimer |
+| `/` | `routes/index.tsx` | Landing page — hero, benchmarks, feature pipeline, workflow steps, CTA |
+| `/predict` | `routes/predict.tsx` | Prediction interface — form, gauge cards, SHAP explanation, training visuals |
 
 ### Component Data Flow (Predict Page)
 
