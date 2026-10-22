@@ -89,7 +89,7 @@ export function PredictPage() {
                 Soil Shear Strength Prediction
               </h1>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Provide borehole laboratory index parameters to simultaneously estimate{" "}
+                Provide laboratory index parameters to simultaneously estimate{" "}
                 <span className="font-medium text-foreground">Undrained Cohesion (Cu)</span> and{" "}
                 <span className="font-medium text-foreground">Internal Friction Angle (φ)</span>{" "}
                 with complete SHAP feature attribution.

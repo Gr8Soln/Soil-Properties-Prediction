@@ -26,7 +26,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Advanced machine learning pipeline predicting soil shear strength parameters (Cu and φ) from borehole index properties with SHAP explainability.",
+          "Advanced machine learning pipeline predicting soil shear strength parameters (Cu and φ) from laboratory index properties with SHAP explainability.",
       },
       { property: "og:title", content: "Soil Properties Predictive Suite" },
     ],
@@ -107,7 +107,7 @@ const rawParameters = [
 const workflowSteps = [
   {
     step: "01",
-    title: "Borehole Lab Testing",
+    title: "Laboratory Index Testing",
     desc: "Collect standard index measurements (Atterberg limits, sieve gradation, consolidation, and unit weight) from field sampling.",
   },
   {
@@ -173,7 +173,7 @@ function IndexPage() {
                 Undrained Cohesion (Cu)
               </span> and{" "}
               <span className="font-semibold text-foreground">Internal Friction Angle (φ)</span>
-              —directly from routine borehole index measurements with zero feature drift and
+              —directly from routine laboratory index measurements with zero feature drift and
               game-theoretic SHAP explainability.
             </motion.p>
 
@@ -609,7 +609,7 @@ function IndexPage() {
           </div>
 
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-            Ready to Analyze Borehole Soil Parameters?
+            Ready to Analyze Laboratory Index Soil Parameters?
           </h2>
 
           <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">

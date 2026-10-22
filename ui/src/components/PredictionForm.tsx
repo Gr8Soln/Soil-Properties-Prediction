@@ -28,7 +28,7 @@ const empty: Record<keyof PredictInput, number | ""> = {
 
 const presets: Record<string, { label: string; values: PredictInput }> = {
   default: {
-    label: "Standard Borehole (Sample #1)",
+    label: "Standard Laboratory Index (Sample #1)",
     values: {
       LL: 47,
       PL: 35.5,
