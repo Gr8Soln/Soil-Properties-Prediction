@@ -1,0 +1,10 @@
+Held_Out,N_Features,Features
+site_0,6,PI_calc;Sat_Unit_Wt_kN_m3;Fines_Content_pct;ln_PI;Mv_50kPa;ln_Mv
+site_1,4,LL;PI_calc;Sat_Unit_Wt_kN_m3;ln_Mv
+site_2,9,LL;PI_calc;Sat_Unit_Wt_kN_m3;Fines_Content_pct;Sand_Fraction_pct;ln_PI;ln_LL;Mv_50kPa;Cv_x_Mv
+site_3,7,PI_calc;Sat_Unit_Wt_kN_m3;ln_PI;Mv_50kPa;ln_Mv;ln_Cv;Cv_x_Mv
+site_4,5,LL;Sat_Unit_Wt_kN_m3;Fines_Content_pct;Mv_50kPa;ln_Mv
+site_6,9,PI_calc;Sat_Unit_Wt_kN_m3;Fines_Content_pct;Sand_Fraction_pct;ln_PI;ln_LL;Mv_50kPa;Cv_50kPa;ln_Mv
+site_7,7,LL;PI_calc;Sat_Unit_Wt_kN_m3;Fines_Content_pct;Sand_Fraction_pct;Mv_50kPa;ln_Mv
+site_8,12,LL;PI_calc;Sat_Unit_Wt_kN_m3;Fines_Content_pct;Sand_Fraction_pct;A_line_distance;ln_PI;ln_LL;Cv_50kPa;ln_Mv;ln_Cv;Cv_x_Mv
+site_9,7,LL;PI_calc;Sat_Unit_Wt_kN_m3;Fines_Content_pct;ln_PI;Mv_50kPa;ln_Mv

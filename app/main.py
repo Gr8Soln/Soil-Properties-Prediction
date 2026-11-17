@@ -35,8 +35,9 @@ app = FastAPI(
     title="Soil-Properties-Prediction API",
     description=(
         "Geotechnical ML inference service. Predicts undrained shear strength "
-        "(Cu_kPa) and friction angle (Phi_deg) from laboratory soil measurements "
-        "using trained Extra Trees Regressor models with SHAP explanations."
+        "(Cu_kPa) and friction angle (Phi_deg) from laboratory soil measurements. "
+        "Serves, per target, the model with the lowest error on held-out sites, "
+        "with SHAP explanations."
     ),
     version="1.1.0",
     docs_url="/docs",
@@ -86,7 +87,7 @@ def _service_unavailable(exc: RuntimeError) -> HTTPException:
 def _feature_error(exc: Exception) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        detail=f"Feature engineering failed: {exc}",
+        detail=f"Invalid input: {exc}",
     )
 
 
@@ -109,6 +110,11 @@ def _predict_target(key: str, payload: Dict[str, float]) -> PredictionResponse:
         prediction=round(prediction, 4),
         target="Cu_kPa" if key == "cu" else "Phi_deg",
         model=model_service.model_name(key),  # type: ignore[arg-type]
+        out_of_range=[
+            warning
+            for warning in model_service.range_warnings(payload)
+            if key in warning["targets"]
+        ],
     )
 
 
@@ -126,6 +132,7 @@ def _predict_and_explain(payload: UnifiedPredictionRequest) -> UnifiedPrediction
         predictions=predictions,
         models=_models_payload(),
         shap=shap_payload,
+        out_of_range=model_service.range_warnings(raw),
     )
 
 
@@ -150,6 +157,7 @@ def _model_info(key: str, comparison_path: Path, importance_path: Path) -> Dict[
         "best_model": model_service.model_name(key),  # type: ignore[arg-type]
         "model_loaded": model_service.is_model_loaded(key),  # type: ignore[arg-type]
         "explainer_loaded": model_service.is_explainer_loaded(key),  # type: ignore[arg-type]
+        "deployment": model_service.meta.get(key, {}),  # type: ignore[call-overload]
         "cv_comparison": _read_csv_as_records(comparison_path),
         "feature_importances": _read_csv_as_records(importance_path),
     }

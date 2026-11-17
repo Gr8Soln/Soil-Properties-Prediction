@@ -1,0 +1,85 @@
+Model,Feature_Set,Validation,Fold,Held_Out,C,epsilon,gamma,alpha,hidden_layer_sizes
+SVR,full,site_holdout,0,site_0,0.3,0.2,scale,,
+SVR,full,site_holdout,1,site_1,0.3,0.2,scale,,
+SVR,full,site_holdout,2,site_2,0.3,0.1,0.01,,
+SVR,full,site_holdout,3,site_3,0.3,0.05,0.1,,
+SVR,full,site_holdout,4,site_4,0.3,0.1,0.01,,
+SVR,full,site_holdout,5,site_6,0.3,0.1,0.01,,
+SVR,full,site_holdout,6,site_7,3.0,0.2,0.01,,
+SVR,full,site_holdout,7,site_8,0.3,0.1,0.01,,
+SVR,full,site_holdout,8,site_9,1.0,0.05,scale,,
+ANN (MLP),full,site_holdout,0,site_0,,,,1.0,"(32, 16)"
+ANN (MLP),full,site_holdout,1,site_1,,,,0.1,"(32, 16)"
+ANN (MLP),full,site_holdout,2,site_2,,,,10.0,"(32, 16)"
+ANN (MLP),full,site_holdout,3,site_3,,,,1.0,"(16,)"
+ANN (MLP),full,site_holdout,4,site_4,,,,10.0,"(32, 16)"
+ANN (MLP),full,site_holdout,5,site_6,,,,10.0,"(16, 8)"
+ANN (MLP),full,site_holdout,6,site_7,,,,10.0,"(8,)"
+ANN (MLP),full,site_holdout,7,site_8,,,,10.0,"(16, 8)"
+ANN (MLP),full,site_holdout,8,site_9,,,,1.0,"(16, 8)"
+SVR,full,shuffled_5fold,0,mixed,30.0,0.05,0.1,,
+SVR,full,shuffled_5fold,1,mixed,10.0,0.1,0.1,,
+SVR,full,shuffled_5fold,2,mixed,3.0,0.05,0.1,,
+SVR,full,shuffled_5fold,3,mixed,10.0,0.05,0.1,,
+SVR,full,shuffled_5fold,4,mixed,3.0,0.1,0.1,,
+ANN (MLP),full,shuffled_5fold,0,mixed,,,,0.1,"(16, 8)"
+ANN (MLP),full,shuffled_5fold,1,mixed,,,,0.1,"(16, 8)"
+ANN (MLP),full,shuffled_5fold,2,mixed,,,,1.0,"(16, 8)"
+ANN (MLP),full,shuffled_5fold,3,mixed,,,,0.1,"(16, 8)"
+ANN (MLP),full,shuffled_5fold,4,mixed,,,,1.0,"(16, 8)"
+SVR,no_mvcv,site_holdout,0,site_0,0.3,0.2,0.1,,
+SVR,no_mvcv,site_holdout,1,site_1,1.0,0.1,0.01,,
+SVR,no_mvcv,site_holdout,2,site_2,0.3,0.2,0.01,,
+SVR,no_mvcv,site_holdout,3,site_3,1.0,0.2,0.1,,
+SVR,no_mvcv,site_holdout,4,site_4,0.3,0.2,0.03,,
+SVR,no_mvcv,site_holdout,5,site_6,0.3,0.2,0.01,,
+SVR,no_mvcv,site_holdout,6,site_7,1.0,0.05,0.01,,
+SVR,no_mvcv,site_holdout,7,site_8,1.0,0.05,0.03,,
+SVR,no_mvcv,site_holdout,8,site_9,1.0,0.2,0.1,,
+ANN (MLP),no_mvcv,site_holdout,0,site_0,,,,10.0,"(16, 8)"
+ANN (MLP),no_mvcv,site_holdout,1,site_1,,,,10.0,"(32, 16)"
+ANN (MLP),no_mvcv,site_holdout,2,site_2,,,,10.0,"(32, 16)"
+ANN (MLP),no_mvcv,site_holdout,3,site_3,,,,1.0,"(8,)"
+ANN (MLP),no_mvcv,site_holdout,4,site_4,,,,10.0,"(8,)"
+ANN (MLP),no_mvcv,site_holdout,5,site_6,,,,10.0,"(32, 16)"
+ANN (MLP),no_mvcv,site_holdout,6,site_7,,,,10.0,"(32, 16)"
+ANN (MLP),no_mvcv,site_holdout,7,site_8,,,,10.0,"(8,)"
+ANN (MLP),no_mvcv,site_holdout,8,site_9,,,,10.0,"(32, 16)"
+SVR,no_mvcv,shuffled_5fold,0,mixed,30.0,0.1,0.1,,
+SVR,no_mvcv,shuffled_5fold,1,mixed,100.0,0.2,0.01,,
+SVR,no_mvcv,shuffled_5fold,2,mixed,3.0,0.05,0.1,,
+SVR,no_mvcv,shuffled_5fold,3,mixed,30.0,0.1,0.1,,
+SVR,no_mvcv,shuffled_5fold,4,mixed,30.0,0.1,scale,,
+ANN (MLP),no_mvcv,shuffled_5fold,0,mixed,,,,1.0,"(32, 16)"
+ANN (MLP),no_mvcv,shuffled_5fold,1,mixed,,,,0.1,"(32, 16)"
+ANN (MLP),no_mvcv,shuffled_5fold,2,mixed,,,,1.0,"(8,)"
+ANN (MLP),no_mvcv,shuffled_5fold,3,mixed,,,,0.1,"(32, 16)"
+ANN (MLP),no_mvcv,shuffled_5fold,4,mixed,,,,1.0,"(16, 8)"
+SVR,plasticity_chart,site_holdout,0,site_0,1.0,0.2,scale,,
+SVR,plasticity_chart,site_holdout,1,site_1,1.0,0.2,scale,,
+SVR,plasticity_chart,site_holdout,2,site_2,1.0,0.2,scale,,
+SVR,plasticity_chart,site_holdout,3,site_3,1.0,0.2,scale,,
+SVR,plasticity_chart,site_holdout,4,site_4,1.0,0.2,0.1,,
+SVR,plasticity_chart,site_holdout,5,site_6,0.3,0.05,0.01,,
+SVR,plasticity_chart,site_holdout,6,site_7,1.0,0.1,scale,,
+SVR,plasticity_chart,site_holdout,7,site_8,0.3,0.1,0.1,,
+SVR,plasticity_chart,site_holdout,8,site_9,1.0,0.2,scale,,
+ANN (MLP),plasticity_chart,site_holdout,0,site_0,,,,10.0,"(32, 16)"
+ANN (MLP),plasticity_chart,site_holdout,1,site_1,,,,10.0,"(32, 16)"
+ANN (MLP),plasticity_chart,site_holdout,2,site_2,,,,10.0,"(32, 16)"
+ANN (MLP),plasticity_chart,site_holdout,3,site_3,,,,0.01,"(16, 8)"
+ANN (MLP),plasticity_chart,site_holdout,4,site_4,,,,1.0,"(32, 16)"
+ANN (MLP),plasticity_chart,site_holdout,5,site_6,,,,10.0,"(32, 16)"
+ANN (MLP),plasticity_chart,site_holdout,6,site_7,,,,10.0,"(32, 16)"
+ANN (MLP),plasticity_chart,site_holdout,7,site_8,,,,10.0,"(16,)"
+ANN (MLP),plasticity_chart,site_holdout,8,site_9,,,,10.0,"(32, 16)"
+SVR,plasticity_chart,shuffled_5fold,0,mixed,30.0,0.1,scale,,
+SVR,plasticity_chart,shuffled_5fold,1,mixed,3.0,0.1,scale,,
+SVR,plasticity_chart,shuffled_5fold,2,mixed,30.0,0.2,scale,,
+SVR,plasticity_chart,shuffled_5fold,3,mixed,3.0,0.05,scale,,
+SVR,plasticity_chart,shuffled_5fold,4,mixed,10.0,0.05,scale,,
+ANN (MLP),plasticity_chart,shuffled_5fold,0,mixed,,,,0.01,"(8,)"
+ANN (MLP),plasticity_chart,shuffled_5fold,1,mixed,,,,0.1,"(32, 16)"
+ANN (MLP),plasticity_chart,shuffled_5fold,2,mixed,,,,0.1,"(8,)"
+ANN (MLP),plasticity_chart,shuffled_5fold,3,mixed,,,,0.1,"(32, 16)"
+ANN (MLP),plasticity_chart,shuffled_5fold,4,mixed,,,,0.1,"(32, 16)"

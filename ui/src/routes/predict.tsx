@@ -44,6 +44,8 @@ export function PredictPage() {
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "Inference failed.";
       setError(message);
+      // Drop the previous result so old numbers are not shown beside the error.
+      setResult(null);
     } finally {
       setLoading(false);
     }

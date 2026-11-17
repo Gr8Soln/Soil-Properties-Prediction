@@ -1,0 +1,67 @@
+{
+  "target": "phi",
+  "target_column": "Phi_deg",
+  "model_name": "XGBoost",
+  "model_class": "XGBRegressor",
+  "feature_set": "minimal",
+  "features": [
+    "LL",
+    "PI_calc",
+    "Sat_Unit_Wt_kN_m3",
+    "Fines_Content_pct",
+    "Sand_Fraction_pct"
+  ],
+  "raw_inputs": [
+    "LL",
+    "PL",
+    "Sat_Unit_Wt_kN_m3",
+    "Fines_Content_pct",
+    "Sand_Fraction_pct"
+  ],
+  "training_ranges": {
+    "LL": [
+      14.9,
+      95.0
+    ],
+    "PL": [
+      3.7,
+      40.6
+    ],
+    "Sat_Unit_Wt_kN_m3": [
+      13.537799999999999,
+      20.5
+    ],
+    "Fines_Content_pct": [
+      12.0,
+      87.8
+    ],
+    "Sand_Fraction_pct": [
+      10.600000000000009,
+      83.0
+    ]
+  },
+  "target_range": [
+    2.0,
+    18.0
+  ],
+  "rows": 228,
+  "sites": 9,
+  "selected_by": "fewest required inputs within bootstrap noise of the lowest site_holdout RMSE (see training/features_experiment.py)",
+  "metrics": {
+    "site_holdout": {
+      "rmse": 3.4199,
+      "mae": 2.6165,
+      "r2": 0.2576
+    },
+    "shuffled_5fold": {
+      "rmse": 1.9364,
+      "mae": 1.3239,
+      "r2": 0.762
+    }
+  },
+  "best_params": {},
+  "versions": {
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1"
+  }
+}

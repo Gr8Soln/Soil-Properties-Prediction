@@ -12,7 +12,8 @@ def merge_xlsx_to_csv(input_dir="datasets", output_file="geotechnical_master_raw
     """
     # Pattern to match the specific naming convention seen in your folder
     path_pattern = os.path.join(input_dir, "geotechnical_data_*.xlsx")
-    files = glob.glob(path_pattern)
+    # [0-9] keeps Finder duplicates such as "geotechnical_data_3 copy.xlsx" out.
+    files = [f for f in glob.glob(path_pattern) if os.path.basename(f)[len("geotechnical_data_"):-len(".xlsx")].isdigit()]
     
     if not files:
         logging.error("No .xlsx files found matching 'geotechnical_data_*.xlsx'")

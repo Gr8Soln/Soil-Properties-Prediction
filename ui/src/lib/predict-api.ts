@@ -44,6 +44,14 @@ export interface ShapTarget {
   summary: ShapSummary;
 }
 
+export interface RangeWarning {
+  field: keyof PredictInput;
+  value: number;
+  min: number;
+  max: number;
+  targets: ("cu" | "phi")[];
+}
+
 export interface PredictResponse {
   predictions: {
     cu_kpa: number;
@@ -57,6 +65,8 @@ export interface PredictResponse {
     cu: ShapTarget;
     phi: ShapTarget;
   };
+  /** Inputs outside the training data range: the prediction is an extrapolation. */
+  out_of_range?: RangeWarning[];
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";

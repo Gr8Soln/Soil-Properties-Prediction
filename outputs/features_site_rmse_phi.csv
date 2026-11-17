@@ -1,0 +1,577 @@
+Feature_Set,Model,Site,Rows,RMSE
+full,Mean Baseline,site_0,5,3.9421243851635515
+full,Mean Baseline,site_1,16,3.94119792928946
+full,Mean Baseline,site_2,27,4.227367149318165
+full,Mean Baseline,site_3,18,3.9060992676889383
+full,Mean Baseline,site_4,43,2.8913984200409835
+full,Mean Baseline,site_6,34,3.6683766661888035
+full,Mean Baseline,site_7,41,4.641880799720892
+full,Mean Baseline,site_8,42,4.536110339491427
+full,Mean Baseline,site_9,2,6.314159292035399
+full,Ridge Regression,site_0,5,3.801030749792416
+full,Ridge Regression,site_1,16,4.981228488764003
+full,Ridge Regression,site_2,27,4.565157555410178
+full,Ridge Regression,site_3,18,3.8567138324049557
+full,Ridge Regression,site_4,43,7.680439760812682
+full,Ridge Regression,site_6,34,5.061485286982114
+full,Ridge Regression,site_7,41,2.659002441555247
+full,Ridge Regression,site_8,42,3.9913788688721903
+full,Ridge Regression,site_9,2,1.1124057840520956
+full,Random Forest,site_0,5,1.8554428381660077
+full,Random Forest,site_1,16,2.2222620828488013
+full,Random Forest,site_2,27,5.584657182733314
+full,Random Forest,site_3,18,3.56427746125336
+full,Random Forest,site_4,43,4.579834811108937
+full,Random Forest,site_6,34,2.665049475709323
+full,Random Forest,site_7,41,2.5069136398228107
+full,Random Forest,site_8,42,2.942716127168638
+full,Random Forest,site_9,2,1.773769078192104
+full,Extra Trees,site_0,5,1.6124544211301683
+full,Extra Trees,site_1,16,1.6320316674870465
+full,Extra Trees,site_2,27,5.149941169239271
+full,Extra Trees,site_3,18,3.8100766478470125
+full,Extra Trees,site_4,43,4.140935884838798
+full,Extra Trees,site_6,34,2.597794351072244
+full,Extra Trees,site_7,41,2.8615996423106824
+full,Extra Trees,site_8,42,1.673965914777233
+full,Extra Trees,site_9,2,2.325955196855218
+full,Gradient Boosting,site_0,5,1.6984241856964122
+full,Gradient Boosting,site_1,16,1.9235480585857565
+full,Gradient Boosting,site_2,27,5.8578309963038295
+full,Gradient Boosting,site_3,18,4.294733008665973
+full,Gradient Boosting,site_4,43,4.278742940743417
+full,Gradient Boosting,site_6,34,3.961860908762913
+full,Gradient Boosting,site_7,41,2.627975721022415
+full,Gradient Boosting,site_8,42,2.5782964570286757
+full,Gradient Boosting,site_9,2,1.9365018736357344
+full,XGBoost,site_0,5,1.2298826667976435
+full,XGBoost,site_1,16,1.3662796091352003
+full,XGBoost,site_2,27,5.416992142077888
+full,XGBoost,site_3,18,3.61829129281282
+full,XGBoost,site_4,43,4.262000874989086
+full,XGBoost,site_6,34,2.5827725595795474
+full,XGBoost,site_7,41,2.5289151057420507
+full,XGBoost,site_8,42,2.3589457485217786
+full,XGBoost,site_9,2,2.4099621260392246
+full,SVR,site_0,5,3.0903150130794668
+full,SVR,site_1,16,3.2445383522534064
+full,SVR,site_2,27,7.156553356301262
+full,SVR,site_3,18,4.249932069363384
+full,SVR,site_4,43,3.8329900337783203
+full,SVR,site_6,34,3.5059692894905545
+full,SVR,site_7,41,2.4940144509323683
+full,SVR,site_8,42,1.5589448046951095
+full,SVR,site_9,2,0.967037722433423
+full,ANN (MLP),site_0,5,1.9210003407058787
+full,ANN (MLP),site_1,16,2.439442512203858
+full,ANN (MLP),site_2,27,6.709086737807689
+full,ANN (MLP),site_3,18,3.7744156101611126
+full,ANN (MLP),site_4,43,5.366959333506264
+full,ANN (MLP),site_6,34,3.694391804231458
+full,ANN (MLP),site_7,41,3.1408950488646643
+full,ANN (MLP),site_8,42,2.5554393994596527
+full,ANN (MLP),site_9,2,5.561655966439809
+no_mvcv,Mean Baseline,site_0,5,3.9421243851635515
+no_mvcv,Mean Baseline,site_1,16,3.94119792928946
+no_mvcv,Mean Baseline,site_2,27,4.227367149318165
+no_mvcv,Mean Baseline,site_3,18,3.9060992676889383
+no_mvcv,Mean Baseline,site_4,43,2.8913984200409835
+no_mvcv,Mean Baseline,site_6,34,3.6683766661888035
+no_mvcv,Mean Baseline,site_7,41,4.641880799720892
+no_mvcv,Mean Baseline,site_8,42,4.536110339491427
+no_mvcv,Mean Baseline,site_9,2,6.314159292035399
+no_mvcv,Ridge Regression,site_0,5,3.3758426146119844
+no_mvcv,Ridge Regression,site_1,16,4.545870843722307
+no_mvcv,Ridge Regression,site_2,27,4.404270368400883
+no_mvcv,Ridge Regression,site_3,18,3.595061861794311
+no_mvcv,Ridge Regression,site_4,43,7.184551701924344
+no_mvcv,Ridge Regression,site_6,34,2.883415204385079
+no_mvcv,Ridge Regression,site_7,41,3.1066669111271312
+no_mvcv,Ridge Regression,site_8,42,3.378873589053353
+no_mvcv,Ridge Regression,site_9,2,0.7582158522526318
+no_mvcv,Random Forest,site_0,5,1.4015332338231823
+no_mvcv,Random Forest,site_1,16,2.1385149249991042
+no_mvcv,Random Forest,site_2,27,5.613204866499356
+no_mvcv,Random Forest,site_3,18,3.4612412410432825
+no_mvcv,Random Forest,site_4,43,4.2513407072334966
+no_mvcv,Random Forest,site_6,34,2.5130031957074834
+no_mvcv,Random Forest,site_7,41,1.8222779562216327
+no_mvcv,Random Forest,site_8,42,2.812982323075835
+no_mvcv,Random Forest,site_9,2,1.947411063868049
+no_mvcv,Extra Trees,site_0,5,0.9514078224750235
+no_mvcv,Extra Trees,site_1,16,1.537077220536895
+no_mvcv,Extra Trees,site_2,27,5.246652510228444
+no_mvcv,Extra Trees,site_3,18,3.641012756214267
+no_mvcv,Extra Trees,site_4,43,4.618277935374255
+no_mvcv,Extra Trees,site_6,34,2.9012588700619495
+no_mvcv,Extra Trees,site_7,41,2.368402935098046
+no_mvcv,Extra Trees,site_8,42,1.7981522989111312
+no_mvcv,Extra Trees,site_9,2,2.0116537011570053
+no_mvcv,Gradient Boosting,site_0,5,0.9189768066500841
+no_mvcv,Gradient Boosting,site_1,16,1.2371076483988939
+no_mvcv,Gradient Boosting,site_2,27,5.305324507974472
+no_mvcv,Gradient Boosting,site_3,18,4.1424205958634515
+no_mvcv,Gradient Boosting,site_4,43,4.444860521646809
+no_mvcv,Gradient Boosting,site_6,34,2.6576570070142207
+no_mvcv,Gradient Boosting,site_7,41,2.237801521677633
+no_mvcv,Gradient Boosting,site_8,42,2.5498399474809355
+no_mvcv,Gradient Boosting,site_9,2,1.8563228354700037
+no_mvcv,XGBoost,site_0,5,0.9133795784454676
+no_mvcv,XGBoost,site_1,16,1.0090799116508333
+no_mvcv,XGBoost,site_2,27,5.381560928257389
+no_mvcv,XGBoost,site_3,18,3.6280714063964545
+no_mvcv,XGBoost,site_4,43,4.470511367075605
+no_mvcv,XGBoost,site_6,34,2.5337809628147263
+no_mvcv,XGBoost,site_7,41,1.4794206144852835
+no_mvcv,XGBoost,site_8,42,2.3968025476440022
+no_mvcv,XGBoost,site_9,2,1.7601208560695916
+no_mvcv,SVR,site_0,5,2.962090627077405
+no_mvcv,SVR,site_1,16,3.8456053387791993
+no_mvcv,SVR,site_2,27,5.294522634356383
+no_mvcv,SVR,site_3,18,4.528890255148136
+no_mvcv,SVR,site_4,43,5.124718564765639
+no_mvcv,SVR,site_6,34,3.8493989950208567
+no_mvcv,SVR,site_7,41,2.172255597513915
+no_mvcv,SVR,site_8,42,2.2975626297498266
+no_mvcv,SVR,site_9,2,1.3985520502551538
+no_mvcv,ANN (MLP),site_0,5,2.8797334473542207
+no_mvcv,ANN (MLP),site_1,16,3.395485921934524
+no_mvcv,ANN (MLP),site_2,27,6.073020198673162
+no_mvcv,ANN (MLP),site_3,18,3.8492232575473704
+no_mvcv,ANN (MLP),site_4,43,5.367547218792742
+no_mvcv,ANN (MLP),site_6,34,3.012613799815032
+no_mvcv,ANN (MLP),site_7,41,2.0243961390473384
+no_mvcv,ANN (MLP),site_8,42,1.2616523728173625
+no_mvcv,ANN (MLP),site_9,2,0.05650728887328741
+minimal,Mean Baseline,site_0,5,3.9421243851635515
+minimal,Mean Baseline,site_1,16,3.94119792928946
+minimal,Mean Baseline,site_2,27,4.227367149318165
+minimal,Mean Baseline,site_3,18,3.9060992676889383
+minimal,Mean Baseline,site_4,43,2.8913984200409835
+minimal,Mean Baseline,site_6,34,3.6683766661888035
+minimal,Mean Baseline,site_7,41,4.641880799720892
+minimal,Mean Baseline,site_8,42,4.536110339491427
+minimal,Mean Baseline,site_9,2,6.314159292035399
+minimal,Ridge Regression,site_0,5,3.2010850809487525
+minimal,Ridge Regression,site_1,16,4.030950420495179
+minimal,Ridge Regression,site_2,27,4.3153773711598165
+minimal,Ridge Regression,site_3,18,3.574458551856323
+minimal,Ridge Regression,site_4,43,6.857556698341323
+minimal,Ridge Regression,site_6,34,2.967300321892274
+minimal,Ridge Regression,site_7,41,3.5269327756351556
+minimal,Ridge Regression,site_8,42,2.713180305046584
+minimal,Ridge Regression,site_9,2,2.240594756963449
+minimal,Random Forest,site_0,5,1.2664654244368985
+minimal,Random Forest,site_1,16,2.1494871686570667
+minimal,Random Forest,site_2,27,4.903742696503337
+minimal,Random Forest,site_3,18,4.060445100677827
+minimal,Random Forest,site_4,43,4.591205067316802
+minimal,Random Forest,site_6,34,2.963981976354519
+minimal,Random Forest,site_7,41,2.4172622053532815
+minimal,Random Forest,site_8,42,2.8222957271604256
+minimal,Random Forest,site_9,2,1.2199062848909061
+minimal,Extra Trees,site_0,5,1.0198009302607596
+minimal,Extra Trees,site_1,16,1.5002411167681664
+minimal,Extra Trees,site_2,27,4.6623407346435
+minimal,Extra Trees,site_3,18,4.127523095672339
+minimal,Extra Trees,site_4,43,5.238660050319583
+minimal,Extra Trees,site_6,34,3.258041363311396
+minimal,Extra Trees,site_7,41,2.5157401942576225
+minimal,Extra Trees,site_8,42,2.267399415425783
+minimal,Extra Trees,site_9,2,1.6054713907799092
+minimal,Gradient Boosting,site_0,5,1.183313909549275
+minimal,Gradient Boosting,site_1,16,1.3244534181651433
+minimal,Gradient Boosting,site_2,27,4.522918426700049
+minimal,Gradient Boosting,site_3,18,3.901314329048085
+minimal,Gradient Boosting,site_4,43,5.865740413649463
+minimal,Gradient Boosting,site_6,34,2.6724936449013352
+minimal,Gradient Boosting,site_7,41,2.649613396879673
+minimal,Gradient Boosting,site_8,42,2.486848624839672
+minimal,Gradient Boosting,site_9,2,0.70378512134688
+minimal,XGBoost,site_0,5,0.971044733490365
+minimal,XGBoost,site_1,16,1.2056368809295885
+minimal,XGBoost,site_2,27,4.869092878259094
+minimal,XGBoost,site_3,18,3.678952380258399
+minimal,XGBoost,site_4,43,4.745670311913389
+minimal,XGBoost,site_6,34,3.1443264020029136
+minimal,XGBoost,site_7,41,1.9860304177647257
+minimal,XGBoost,site_8,42,2.6178294328986533
+minimal,XGBoost,site_9,2,0.6101752674186434
+minimal,SVR,site_0,5,2.800883251850088
+minimal,SVR,site_1,16,3.03695328005547
+minimal,SVR,site_2,27,5.014383108301364
+minimal,SVR,site_3,18,4.091583930340011
+minimal,SVR,site_4,43,4.628733766585081
+minimal,SVR,site_6,34,3.8215793462422014
+minimal,SVR,site_7,41,2.201337599644755
+minimal,SVR,site_8,42,2.9077507437851198
+minimal,SVR,site_9,2,0.6611525629451046
+minimal,ANN (MLP),site_0,5,3.1410153647592374
+minimal,ANN (MLP),site_1,16,3.525592960758913
+minimal,ANN (MLP),site_2,27,5.075073532942865
+minimal,ANN (MLP),site_3,18,6.069090098798852
+minimal,ANN (MLP),site_4,43,6.128520838201728
+minimal,ANN (MLP),site_6,34,3.220879044594027
+minimal,ANN (MLP),site_7,41,2.266484807866512
+minimal,ANN (MLP),site_8,42,1.5160583480687297
+minimal,ANN (MLP),site_9,2,0.8278306077846062
+minimal_mvcv,Mean Baseline,site_0,5,3.9421243851635515
+minimal_mvcv,Mean Baseline,site_1,16,3.94119792928946
+minimal_mvcv,Mean Baseline,site_2,27,4.227367149318165
+minimal_mvcv,Mean Baseline,site_3,18,3.9060992676889383
+minimal_mvcv,Mean Baseline,site_4,43,2.8913984200409835
+minimal_mvcv,Mean Baseline,site_6,34,3.6683766661888035
+minimal_mvcv,Mean Baseline,site_7,41,4.641880799720892
+minimal_mvcv,Mean Baseline,site_8,42,4.536110339491427
+minimal_mvcv,Mean Baseline,site_9,2,6.314159292035399
+minimal_mvcv,Ridge Regression,site_0,5,3.619628996623743
+minimal_mvcv,Ridge Regression,site_1,16,4.251511675497253
+minimal_mvcv,Ridge Regression,site_2,27,4.594049715926702
+minimal_mvcv,Ridge Regression,site_3,18,3.7854785111981446
+minimal_mvcv,Ridge Regression,site_4,43,7.078988069436609
+minimal_mvcv,Ridge Regression,site_6,34,5.126410649206742
+minimal_mvcv,Ridge Regression,site_7,41,2.9830541025276998
+minimal_mvcv,Ridge Regression,site_8,42,3.4005686480312987
+minimal_mvcv,Ridge Regression,site_9,2,2.8710296314891983
+minimal_mvcv,Random Forest,site_0,5,2.2026179494186913
+minimal_mvcv,Random Forest,site_1,16,2.3706488484486314
+minimal_mvcv,Random Forest,site_2,27,4.493201822155626
+minimal_mvcv,Random Forest,site_3,18,3.5817008813824747
+minimal_mvcv,Random Forest,site_4,43,3.588471351300745
+minimal_mvcv,Random Forest,site_6,34,2.6215526527904753
+minimal_mvcv,Random Forest,site_7,41,2.7373606901954184
+minimal_mvcv,Random Forest,site_8,42,2.89570904113401
+minimal_mvcv,Random Forest,site_9,2,1.2598741339531476
+minimal_mvcv,Extra Trees,site_0,5,1.7187664266700782
+minimal_mvcv,Extra Trees,site_1,16,2.002256765752227
+minimal_mvcv,Extra Trees,site_2,27,4.590208691821895
+minimal_mvcv,Extra Trees,site_3,18,3.9728292530501386
+minimal_mvcv,Extra Trees,site_4,43,3.968892898296529
+minimal_mvcv,Extra Trees,site_6,34,2.6458768131323214
+minimal_mvcv,Extra Trees,site_7,41,2.896956674472938
+minimal_mvcv,Extra Trees,site_8,42,1.9278414350588011
+minimal_mvcv,Extra Trees,site_9,2,2.126464845479209
+minimal_mvcv,Gradient Boosting,site_0,5,2.03940383320903
+minimal_mvcv,Gradient Boosting,site_1,16,1.8897881977682185
+minimal_mvcv,Gradient Boosting,site_2,27,4.749848441698742
+minimal_mvcv,Gradient Boosting,site_3,18,3.9404260217043774
+minimal_mvcv,Gradient Boosting,site_4,43,4.178529849705343
+minimal_mvcv,Gradient Boosting,site_6,34,3.1527644621377977
+minimal_mvcv,Gradient Boosting,site_7,41,2.707625764934154
+minimal_mvcv,Gradient Boosting,site_8,42,2.3436891910355167
+minimal_mvcv,Gradient Boosting,site_9,2,1.3832057771336188
+minimal_mvcv,XGBoost,site_0,5,1.7777689164941104
+minimal_mvcv,XGBoost,site_1,16,1.3003416253607762
+minimal_mvcv,XGBoost,site_2,27,4.96154717762212
+minimal_mvcv,XGBoost,site_3,18,3.77210771169792
+minimal_mvcv,XGBoost,site_4,43,4.068921916711121
+minimal_mvcv,XGBoost,site_6,34,2.710223630311852
+minimal_mvcv,XGBoost,site_7,41,2.4825670238241475
+minimal_mvcv,XGBoost,site_8,42,2.361821663035623
+minimal_mvcv,XGBoost,site_9,2,2.2782545132602476
+minimal_mvcv,SVR,site_0,5,2.8207100890618086
+minimal_mvcv,SVR,site_1,16,4.261022156005063
+minimal_mvcv,SVR,site_2,27,4.982288341732924
+minimal_mvcv,SVR,site_3,18,4.089070557597108
+minimal_mvcv,SVR,site_4,43,4.012580379027367
+minimal_mvcv,SVR,site_6,34,3.84070461377784
+minimal_mvcv,SVR,site_7,41,2.306513554656389
+minimal_mvcv,SVR,site_8,42,1.6450397505677687
+minimal_mvcv,SVR,site_9,2,0.9930791858367166
+minimal_mvcv,ANN (MLP),site_0,5,2.4924918054724365
+minimal_mvcv,ANN (MLP),site_1,16,4.021753915729627
+minimal_mvcv,ANN (MLP),site_2,27,5.465151500218898
+minimal_mvcv,ANN (MLP),site_3,18,3.6574950427468678
+minimal_mvcv,ANN (MLP),site_4,43,5.511231755019295
+minimal_mvcv,ANN (MLP),site_6,34,3.801828781678755
+minimal_mvcv,ANN (MLP),site_7,41,2.381674564867915
+minimal_mvcv,ANN (MLP),site_8,42,1.864256654718906
+minimal_mvcv,ANN (MLP),site_9,2,2.0139923502697687
+plasticity_chart,Mean Baseline,site_0,5,3.9421243851635515
+plasticity_chart,Mean Baseline,site_1,16,3.94119792928946
+plasticity_chart,Mean Baseline,site_2,27,4.227367149318165
+plasticity_chart,Mean Baseline,site_3,18,3.9060992676889383
+plasticity_chart,Mean Baseline,site_4,43,2.8913984200409835
+plasticity_chart,Mean Baseline,site_6,34,3.6683766661888035
+plasticity_chart,Mean Baseline,site_7,41,4.641880799720892
+plasticity_chart,Mean Baseline,site_8,42,4.536110339491427
+plasticity_chart,Mean Baseline,site_9,2,6.314159292035399
+plasticity_chart,Ridge Regression,site_0,5,3.2097548957081066
+plasticity_chart,Ridge Regression,site_1,16,4.077742332174671
+plasticity_chart,Ridge Regression,site_2,27,4.319536404131489
+plasticity_chart,Ridge Regression,site_3,18,3.5759535190989573
+plasticity_chart,Ridge Regression,site_4,43,6.85973101303927
+plasticity_chart,Ridge Regression,site_6,34,2.96752065270832
+plasticity_chart,Ridge Regression,site_7,41,3.5267684501789556
+plasticity_chart,Ridge Regression,site_8,42,2.7167712239213846
+plasticity_chart,Ridge Regression,site_9,2,2.2386648219122653
+plasticity_chart,Random Forest,site_0,5,1.3467634965841226
+plasticity_chart,Random Forest,site_1,16,2.328636037851111
+plasticity_chart,Random Forest,site_2,27,5.548695025858722
+plasticity_chart,Random Forest,site_3,18,4.170869804714003
+plasticity_chart,Random Forest,site_4,43,4.612001661541428
+plasticity_chart,Random Forest,site_6,34,2.7545792124026485
+plasticity_chart,Random Forest,site_7,41,2.5958502110292194
+plasticity_chart,Random Forest,site_8,42,2.7619722820615555
+plasticity_chart,Random Forest,site_9,2,1.1638290089875092
+plasticity_chart,Extra Trees,site_0,5,1.045012132218512
+plasticity_chart,Extra Trees,site_1,16,1.473239973353009
+plasticity_chart,Extra Trees,site_2,27,5.325694605252944
+plasticity_chart,Extra Trees,site_3,18,4.302139039633967
+plasticity_chart,Extra Trees,site_4,43,5.257913186512023
+plasticity_chart,Extra Trees,site_6,34,3.170701524320129
+plasticity_chart,Extra Trees,site_7,41,2.751572074347434
+plasticity_chart,Extra Trees,site_8,42,2.3323621132351056
+plasticity_chart,Extra Trees,site_9,2,1.6704265808201164
+plasticity_chart,Gradient Boosting,site_0,5,0.9685836742643864
+plasticity_chart,Gradient Boosting,site_1,16,1.3676026710270164
+plasticity_chart,Gradient Boosting,site_2,27,5.385145767911814
+plasticity_chart,Gradient Boosting,site_3,18,4.182362389633529
+plasticity_chart,Gradient Boosting,site_4,43,5.782908247119725
+plasticity_chart,Gradient Boosting,site_6,34,2.802882886474625
+plasticity_chart,Gradient Boosting,site_7,41,3.1674911058794137
+plasticity_chart,Gradient Boosting,site_8,42,2.361275452397359
+plasticity_chart,Gradient Boosting,site_9,2,0.9645241213120805
+plasticity_chart,XGBoost,site_0,5,0.9514141459868569
+plasticity_chart,XGBoost,site_1,16,1.4352805245815698
+plasticity_chart,XGBoost,site_2,27,5.364787342767622
+plasticity_chart,XGBoost,site_3,18,3.947701294881798
+plasticity_chart,XGBoost,site_4,43,5.065209785052206
+plasticity_chart,XGBoost,site_6,34,2.842181894172006
+plasticity_chart,XGBoost,site_7,41,2.4343979546422423
+plasticity_chart,XGBoost,site_8,42,2.7471860292374863
+plasticity_chart,XGBoost,site_9,2,1.2959116445386598
+plasticity_chart,SVR,site_0,5,2.943401683694069
+plasticity_chart,SVR,site_1,16,3.412566853457149
+plasticity_chart,SVR,site_2,27,4.544593603755574
+plasticity_chart,SVR,site_3,18,3.9071746036124573
+plasticity_chart,SVR,site_4,43,5.442828999848167
+plasticity_chart,SVR,site_6,34,4.042390599206065
+plasticity_chart,SVR,site_7,41,2.1958935651622795
+plasticity_chart,SVR,site_8,42,2.237839126180732
+plasticity_chart,SVR,site_9,2,0.6274086909689958
+plasticity_chart,ANN (MLP),site_0,5,2.9527422769022267
+plasticity_chart,ANN (MLP),site_1,16,3.2390093529798394
+plasticity_chart,ANN (MLP),site_2,27,5.6270364299741775
+plasticity_chart,ANN (MLP),site_3,18,3.8939209542276636
+plasticity_chart,ANN (MLP),site_4,43,6.188609676452149
+plasticity_chart,ANN (MLP),site_6,34,3.4744286792063876
+plasticity_chart,ANN (MLP),site_7,41,2.3397192043112054
+plasticity_chart,ANN (MLP),site_8,42,1.4604308386775802
+plasticity_chart,ANN (MLP),site_9,2,0.9448927035904454
+log_scaled,Mean Baseline,site_0,5,3.9421243851635515
+log_scaled,Mean Baseline,site_1,16,3.94119792928946
+log_scaled,Mean Baseline,site_2,27,4.227367149318165
+log_scaled,Mean Baseline,site_3,18,3.9060992676889383
+log_scaled,Mean Baseline,site_4,43,2.8913984200409835
+log_scaled,Mean Baseline,site_6,34,3.6683766661888035
+log_scaled,Mean Baseline,site_7,41,4.641880799720892
+log_scaled,Mean Baseline,site_8,42,4.536110339491427
+log_scaled,Mean Baseline,site_9,2,6.314159292035399
+log_scaled,Ridge Regression,site_0,5,2.916744914506729
+log_scaled,Ridge Regression,site_1,16,3.3772999870692133
+log_scaled,Ridge Regression,site_2,27,4.5735313276592615
+log_scaled,Ridge Regression,site_3,18,3.0867851018785974
+log_scaled,Ridge Regression,site_4,43,6.105818751864187
+log_scaled,Ridge Regression,site_6,34,3.644259967293595
+log_scaled,Ridge Regression,site_7,41,2.7989239861623676
+log_scaled,Ridge Regression,site_8,42,1.881758482682653
+log_scaled,Ridge Regression,site_9,2,3.406798703932721
+log_scaled,Random Forest,site_0,5,1.3172584233299924
+log_scaled,Random Forest,site_1,16,2.3308018639585675
+log_scaled,Random Forest,site_2,27,5.523336249989411
+log_scaled,Random Forest,site_3,18,4.171093272493903
+log_scaled,Random Forest,site_4,43,4.589426541750364
+log_scaled,Random Forest,site_6,34,2.751887123284833
+log_scaled,Random Forest,site_7,41,2.605843558701212
+log_scaled,Random Forest,site_8,42,2.754128953182306
+log_scaled,Random Forest,site_9,2,1.2035782191438809
+log_scaled,Extra Trees,site_0,5,1.1514097671502095
+log_scaled,Extra Trees,site_1,16,1.5484539110692124
+log_scaled,Extra Trees,site_2,27,5.327312968401998
+log_scaled,Extra Trees,site_3,18,4.000522792800188
+log_scaled,Extra Trees,site_4,43,4.950979269766018
+log_scaled,Extra Trees,site_6,34,3.0814470066181814
+log_scaled,Extra Trees,site_7,41,2.8323195084226174
+log_scaled,Extra Trees,site_8,42,2.648637677881395
+log_scaled,Extra Trees,site_9,2,1.58203155582027
+log_scaled,Gradient Boosting,site_0,5,0.9712683150595279
+log_scaled,Gradient Boosting,site_1,16,1.3350522746864462
+log_scaled,Gradient Boosting,site_2,27,5.181750129188921
+log_scaled,Gradient Boosting,site_3,18,4.177532828971714
+log_scaled,Gradient Boosting,site_4,43,5.766356557387841
+log_scaled,Gradient Boosting,site_6,34,2.733377493467175
+log_scaled,Gradient Boosting,site_7,41,3.1605068678208363
+log_scaled,Gradient Boosting,site_8,42,2.3374970005067026
+log_scaled,Gradient Boosting,site_9,2,0.9970855317633218
+log_scaled,XGBoost,site_0,5,0.9341701337414979
+log_scaled,XGBoost,site_1,16,1.3405131483591832
+log_scaled,XGBoost,site_2,27,5.330634839747503
+log_scaled,XGBoost,site_3,18,4.011733633451265
+log_scaled,XGBoost,site_4,43,5.285079907169291
+log_scaled,XGBoost,site_6,34,2.8204038601877546
+log_scaled,XGBoost,site_7,41,2.3224374833943413
+log_scaled,XGBoost,site_8,42,2.6755130696803127
+log_scaled,XGBoost,site_9,2,1.475250992073244
+log_scaled,SVR,site_0,5,3.066742498777856
+log_scaled,SVR,site_1,16,3.421449198937689
+log_scaled,SVR,site_2,27,4.773872598115934
+log_scaled,SVR,site_3,18,3.662083227232877
+log_scaled,SVR,site_4,43,5.808475310544966
+log_scaled,SVR,site_6,34,4.28108941146821
+log_scaled,SVR,site_7,41,2.514435173061759
+log_scaled,SVR,site_8,42,3.4751622795807187
+log_scaled,SVR,site_9,2,1.2260376860959492
+log_scaled,ANN (MLP),site_0,5,2.9408854072812027
+log_scaled,ANN (MLP),site_1,16,3.1698102241212687
+log_scaled,ANN (MLP),site_2,27,4.5970609348073115
+log_scaled,ANN (MLP),site_3,18,3.743671436818329
+log_scaled,ANN (MLP),site_4,43,5.772422046757144
+log_scaled,ANN (MLP),site_6,34,3.3490496279440127
+log_scaled,ANN (MLP),site_7,41,2.289650154357001
+log_scaled,ANN (MLP),site_8,42,1.4505094100567955
+log_scaled,ANN (MLP),site_9,2,0.6975762676056624
+physics,Mean Baseline,site_0,5,3.9421243851635515
+physics,Mean Baseline,site_1,16,3.94119792928946
+physics,Mean Baseline,site_2,27,4.227367149318165
+physics,Mean Baseline,site_3,18,3.9060992676889383
+physics,Mean Baseline,site_4,43,2.8913984200409835
+physics,Mean Baseline,site_6,34,3.6683766661888035
+physics,Mean Baseline,site_7,41,4.641880799720892
+physics,Mean Baseline,site_8,42,4.536110339491427
+physics,Mean Baseline,site_9,2,6.314159292035399
+physics,Ridge Regression,site_0,5,3.480311959105606
+physics,Ridge Regression,site_1,16,4.058779913695322
+physics,Ridge Regression,site_2,27,4.906942455796824
+physics,Ridge Regression,site_3,18,2.9328714782473684
+physics,Ridge Regression,site_4,43,5.249124170427686
+physics,Ridge Regression,site_6,34,6.621775231281192
+physics,Ridge Regression,site_7,41,2.6248387203740267
+physics,Ridge Regression,site_8,42,1.959575636263566
+physics,Ridge Regression,site_9,2,4.067086882688035
+physics,Random Forest,site_0,5,2.402176457760934
+physics,Random Forest,site_1,16,2.7613739233289127
+physics,Random Forest,site_2,27,5.320539227518272
+physics,Random Forest,site_3,18,3.686621005613528
+physics,Random Forest,site_4,43,3.7152328243497346
+physics,Random Forest,site_6,34,3.0453014769561224
+physics,Random Forest,site_7,41,2.84402689616301
+physics,Random Forest,site_8,42,2.6087258688638544
+physics,Random Forest,site_9,2,1.2235187521979576
+physics,Extra Trees,site_0,5,2.2693356342526525
+physics,Extra Trees,site_1,16,2.2966672843189793
+physics,Extra Trees,site_2,27,5.222119342682445
+physics,Extra Trees,site_3,18,3.6245702326765508
+physics,Extra Trees,site_4,43,3.481482038887451
+physics,Extra Trees,site_6,34,2.7920879366430618
+physics,Extra Trees,site_7,41,3.1665116035066623
+physics,Extra Trees,site_8,42,2.0735216157714094
+physics,Extra Trees,site_9,2,1.7338451207584062
+physics,Gradient Boosting,site_0,5,2.0905353229599277
+physics,Gradient Boosting,site_1,16,2.249247595396375
+physics,Gradient Boosting,site_2,27,5.82073245797695
+physics,Gradient Boosting,site_3,18,3.8172240614961908
+physics,Gradient Boosting,site_4,43,4.131727166253985
+physics,Gradient Boosting,site_6,34,3.4075662897025594
+physics,Gradient Boosting,site_7,41,3.2161922103752243
+physics,Gradient Boosting,site_8,42,1.905023487597049
+physics,Gradient Boosting,site_9,2,0.781441992715939
+physics,XGBoost,site_0,5,2.174263262439955
+physics,XGBoost,site_1,16,2.1723887943073685
+physics,XGBoost,site_2,27,5.205106443512214
+physics,XGBoost,site_3,18,3.279821733572103
+physics,XGBoost,site_4,43,4.107133833751251
+physics,XGBoost,site_6,34,2.924235306068871
+physics,XGBoost,site_7,41,2.8576614631214103
+physics,XGBoost,site_8,42,1.9427296923721287
+physics,XGBoost,site_9,2,1.2161277787614466
+physics,SVR,site_0,5,3.2464299380524038
+physics,SVR,site_1,16,3.628009974130044
+physics,SVR,site_2,27,4.404116119154445
+physics,SVR,site_3,18,3.283716727530717
+physics,SVR,site_4,43,3.2973620858409167
+physics,SVR,site_6,34,3.699640908990731
+physics,SVR,site_7,41,2.4705079232822187
+physics,SVR,site_8,42,1.832952081873856
+physics,SVR,site_9,2,1.5881002054050584
+physics,ANN (MLP),site_0,5,3.0316780118061617
+physics,ANN (MLP),site_1,16,2.9456479864884897
+physics,ANN (MLP),site_2,27,4.867260955466828
+physics,ANN (MLP),site_3,18,3.1766864165215423
+physics,ANN (MLP),site_4,43,5.15407675818062
+physics,ANN (MLP),site_6,34,3.6270617833935863
+physics,ANN (MLP),site_7,41,3.0601805529599204
+physics,ANN (MLP),site_8,42,1.7191299413938173
+physics,ANN (MLP),site_9,2,0.7706755262368543
+selected,Mean Baseline,site_0,5,3.9421243851635515
+selected,Mean Baseline,site_1,16,3.94119792928946
+selected,Mean Baseline,site_2,27,4.227367149318165
+selected,Mean Baseline,site_3,18,3.9060992676889383
+selected,Mean Baseline,site_4,43,2.8913984200409835
+selected,Mean Baseline,site_6,34,3.6683766661888035
+selected,Mean Baseline,site_7,41,4.641880799720892
+selected,Mean Baseline,site_8,42,4.536110339491427
+selected,Mean Baseline,site_9,2,6.314159292035399
+selected,Ridge Regression,site_0,5,3.409753096803918
+selected,Ridge Regression,site_1,16,4.985892751479067
+selected,Ridge Regression,site_2,27,4.670421191382138
+selected,Ridge Regression,site_3,18,2.902230352535
+selected,Ridge Regression,site_4,43,6.647782027696113
+selected,Ridge Regression,site_6,34,3.875447419702737
+selected,Ridge Regression,site_7,41,3.2355206665047263
+selected,Ridge Regression,site_8,42,1.977452695136123
+selected,Ridge Regression,site_9,2,2.7851849733959244
+selected,Random Forest,site_0,5,1.239612565463152
+selected,Random Forest,site_1,16,2.1175764204623677
+selected,Random Forest,site_2,27,4.48745905181454
+selected,Random Forest,site_3,18,3.6473572622711417
+selected,Random Forest,site_4,43,5.785455107347717
+selected,Random Forest,site_6,34,2.6039607274485874
+selected,Random Forest,site_7,41,2.4798493673539634
+selected,Random Forest,site_8,42,2.6406388040836717
+selected,Random Forest,site_9,2,1.5788740671919361
+selected,Extra Trees,site_0,5,1.1541892152995672
+selected,Extra Trees,site_1,16,1.457264572148469
+selected,Extra Trees,site_2,27,4.85788418527402
+selected,Extra Trees,site_3,18,3.8303460416485677
+selected,Extra Trees,site_4,43,4.722992036315355
+selected,Extra Trees,site_6,34,2.541670695970014
+selected,Extra Trees,site_7,41,2.946930607184942
+selected,Extra Trees,site_8,42,2.058508977987446
+selected,Extra Trees,site_9,2,2.3793462238693586
+selected,Gradient Boosting,site_0,5,1.1092646496512628
+selected,Gradient Boosting,site_1,16,1.3805298201605554
+selected,Gradient Boosting,site_2,27,4.8504745092160055
+selected,Gradient Boosting,site_3,18,4.096228012257691
+selected,Gradient Boosting,site_4,43,5.159820719032266
+selected,Gradient Boosting,site_6,34,3.198152923888043
+selected,Gradient Boosting,site_7,41,2.706284234371533
+selected,Gradient Boosting,site_8,42,1.897529666330548
+selected,Gradient Boosting,site_9,2,1.493385341340963
+selected,XGBoost,site_0,5,0.9541442170686436
+selected,XGBoost,site_1,16,1.1722519928449788
+selected,XGBoost,site_2,27,4.6494734171452325
+selected,XGBoost,site_3,18,3.3764771631894703
+selected,XGBoost,site_4,43,4.995869952721518
+selected,XGBoost,site_6,34,2.8593482127023298
+selected,XGBoost,site_7,41,2.375710888449418
+selected,XGBoost,site_8,42,2.0124392889098046
+selected,XGBoost,site_9,2,2.697305632693472
+selected,SVR,site_0,5,2.9593647946081068
+selected,SVR,site_1,16,4.188687479518635
+selected,SVR,site_2,27,5.065163259914883
+selected,SVR,site_3,18,3.490870645777604
+selected,SVR,site_4,43,5.4005148018588525
+selected,SVR,site_6,34,3.517926063112596
+selected,SVR,site_7,41,1.8315326025067962
+selected,SVR,site_8,42,1.8204367540486301
+selected,SVR,site_9,2,1.688827154277093
+selected,ANN (MLP),site_0,5,2.620836152029782
+selected,ANN (MLP),site_1,16,4.431215476823814
+selected,ANN (MLP),site_2,27,4.497291022306099
+selected,ANN (MLP),site_3,18,3.2751878290003784
+selected,ANN (MLP),site_4,43,6.126501829179036
+selected,ANN (MLP),site_6,34,4.028603429779806
+selected,ANN (MLP),site_7,41,2.8002864710935373
+selected,ANN (MLP),site_8,42,1.6630417402128723
+selected,ANN (MLP),site_9,2,0.7889586370641275
