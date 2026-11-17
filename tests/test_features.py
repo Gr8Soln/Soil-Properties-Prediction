@@ -47,3 +47,35 @@ def test_deployed_model_agrees_with_its_metadata(target):
         assert list(model.feature_names_in_) == list(X.columns)
     background = pd.read_csv(OUTPUT_DIR / f"{target}_shap_background.csv")
     assert list(background.columns) == meta["features"]
+
+
+# --- de-duplicated experiment feature sets -----------------------------------------
+
+import numpy as np
+
+from app.feature_engineering import EXPERIMENT_FEATURE_SETS, build_experiment_pool
+
+
+@pytest.mark.parametrize("feature_set", EXPERIMENT_FEATURE_SETS)
+@pytest.mark.parametrize("target", ["cu", "phi"])
+def test_experiment_sets_are_finite_ordered_and_use_declared_inputs(target, feature_set):
+    frame = load_target_frame(target)
+    X = build_features(target, frame, feature_set)
+    assert list(X.columns) == feature_columns(target, feature_set)
+    assert np.isfinite(X.to_numpy()).all()
+    # Building from only the declared raw inputs must give the same matrix.
+    needed = raw_input_columns(target, feature_set)
+    pd.testing.assert_frame_equal(X, build_features(target, frame[needed], feature_set))
+
+
+def test_experiment_sets_have_no_duplicate_information():
+    pool = build_experiment_pool(load_target_frame("cu"))
+    # Only LL and PI carry plasticity; the PL-based duplicates are gone.
+    assert not {"PL", "LL_to_PL_Ratio", "Plasticity_to_LL", "Coarse_Fraction_pct"} & set(pool.columns)
+    assert np.allclose(pool["A_line_distance"], pool["PI_calc"] - 0.73 * (pool["LL"] - 20.0))
+    assert np.allclose(pool["Cv_x_Mv"], load_target_frame("cu")["Cv_50kPa"] * load_target_frame("cu")["Mv_50kPa"])
+
+
+def test_sets_without_consolidation_inputs_do_not_need_mv_cv():
+    for feature_set in ("minimal", "plasticity_chart", "log_scaled"):
+        assert not {"Mv_50kPa", "Cv_50kPa"} & set(raw_input_columns("cu", feature_set))

@@ -165,3 +165,40 @@ def held_out_importance(
         .sort_values("Importance", ascending=False)
         .reset_index(drop=True)
     )
+
+
+# ---------------------------------------------------------------------------
+# Feature selection (always run on training sites only)
+# ---------------------------------------------------------------------------
+
+def backward_select(
+    X: pd.DataFrame, y: pd.Series, groups: pd.Series, tolerance: float = 0.005, min_features: int = 2
+) -> list[str]:
+    """Greedy backward elimination scored by site-grouped CV on the rows given.
+
+    Pass training rows only: the held-out site of an outer fold must never reach this
+    function, otherwise the selected features are tuned on the data they are scored on.
+    A feature is dropped while the CV RMSE stays within ``tolerance`` (relative) of the
+    best seen, so ties go to the smaller set.
+    """
+    from sklearn.ensemble import ExtraTreesRegressor
+    from sklearn.model_selection import cross_val_predict
+
+    splits = list(GroupKFold(n_splits=min(4, groups.nunique())).split(X, groups=groups))
+    model = ExtraTreesRegressor(
+        n_estimators=100, min_samples_leaf=2, random_state=RANDOM_STATE, n_jobs=-1
+    )
+
+    def score(columns: list[str]) -> float:
+        return rmse(y, cross_val_predict(model, X[columns], y, cv=splits))
+
+    kept = list(X.columns)
+    best = score(kept)
+    while len(kept) > min_features:
+        trials = [(score([c for c in kept if c != drop]), drop) for drop in kept]
+        trial_score, drop = min(trials)
+        if trial_score > best * (1.0 + tolerance):
+            break
+        kept.remove(drop)
+        best = min(best, trial_score)
+    return kept
