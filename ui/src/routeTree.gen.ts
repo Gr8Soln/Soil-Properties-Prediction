@@ -37,36 +37,28 @@ const ResearchRoute = ResearchRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/docs': typeof DocsRoute
   '/predict': typeof PredictRoute
-  '/research': typeof ResearchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/docs': typeof DocsRoute
   '/predict': typeof PredictRoute
-  '/research': typeof ResearchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/docs': typeof DocsRoute
   '/predict': typeof PredictRoute
-  '/research': typeof ResearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/docs' | '/predict' | '/research'
+  fullPaths: '/' | '/predict'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/docs' | '/predict' | '/research'
-  id: '__root__' | '/' | '/docs' | '/predict' | '/research'
+  to: '/' | '/predict'
+  id: '__root__' | '/' | '/predict'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DocsRoute: typeof DocsRoute
   PredictRoute: typeof PredictRoute
-  ResearchRoute: typeof ResearchRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -104,9 +96,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DocsRoute: DocsRoute,
   PredictRoute: PredictRoute,
-  ResearchRoute: ResearchRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
