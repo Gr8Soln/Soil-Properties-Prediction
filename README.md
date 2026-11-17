@@ -1,210 +1,134 @@
-# Geotechnical Shear Strength Predictive Suite
+# Geotechnical Shear Strength Prediction
 
-**Senior ML Engineer Deliverable**  
-An end-to-end machine learning pipeline and **production FastAPI inference service** for predicting soil shear strength parameters from borehole data.
+Machine-learning pipeline, inference API and web UI that estimate two soil shear-strength
+parameters from routine laboratory index tests:
 
----
+- **Undrained cohesion** `Cu_kPa`
+- **Angle of internal friction** `Phi_deg`
 
-## 🎯 Project Overview
-This suite predicts two critical geotechnical parameters:
+Data: 10 laboratory workbooks covering 9 distinct sites, 227 (Cu) / 228 (Phi) complete samples.
 
-- **Angle of Internal Friction (φ / Phi_deg)** — Measures soil's resistance to shearing  
-- **Undrained Cohesion (Cu_kPa)** — Measures soil's shear strength under undrained conditions
+## Quick start
 
-The pipeline processes 10 disparate borehole datasets, applies geotechnical domain logic, engineers behavioural features, trains and compares multiple ML algorithms, and exposes the best models via a **REST API**.
-
----
-
-## 📦 Project Structure
-```
-Soil-Properties-Prediction/
-│
-├── app/                              # 🆕 FastAPI inference service
-│   ├── __init__.py
-│   ├── main.py                       # API routes & startup logic
-│   ├── schemas.py                    # Pydantic request/response models
-│   └── feature_engineering.py        # build_cu_features & build_phi_features
-│
-├── notebooks/
-│   ├── Data_Cleaning.ipynb           # Phase 2: Geotechnical cleaning logic
-│   ├── Feature_Engineering.ipynb     # Phase 3: Advanced feature derivation
-│   ├── Cu_Target_Modeling.ipynb      # Phase 4a: Cu_kPa model training
-│   └── Phi_Target_Modeling.ipynb     # Phase 4b: Phi_deg model training
-│
-├── outputs/                          # All trained artifacts & evaluation files
-│   ├── cu_best_model.joblib          # ExtraTreesRegressor – Cu_kPa
-│   ├── phi_best_model.joblib         # ExtraTreesRegressor – Phi_deg
-│   ├── cu_model_comparison.csv       # CV results for all Cu models
-│   ├── phi_model_comparison.csv      # CV results for all Phi models
-│   ├── cu_feature_importance.csv     # Permutation importances – Cu
-│   ├── phi_feature_importance.csv    # Permutation importances – Phi
-│   ├── cu_oof_predictions.csv        # Out-of-fold predictions – Cu
-│   └── phi_oof_predictions.csv       # Out-of-fold predictions – Phi
-│
-├── datasets/                         # Input Excel files (.xlsx)
-│   └── geotechnical_data_*.xlsx
-│
-├── datasets_merger.py                # Phase 1: Data unification script
-│   └── requirements.txt
-│   └── README.md
-```
-
----
-
-## 🚀 Quick Start
-### 1. Environment Setup
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # macOS/Linux
-pip install -r requirements.txt
+source .venv/bin/activate
+pip install -r requirements.txt      # macOS also needs: brew install libomp
+
+python -m training.train             # train + compare all models (~10 min)
+python -m training.report            # figures -> outputs/figures/
+pytest                               # tests
+uvicorn app.main:app --reload        # API at http://127.0.0.1:8000 (docs at /docs)
+cd ui && bun install && bun run dev  # web UI
 ```
 
-### 2. Start the Inference API
-```bash
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+## Models compared
+
+Linear Regression, Ridge, Random Forest, Extra Trees, Gradient Boosting, XGBoost,
+**Support Vector Regression** and an **Artificial Neural Network (MLP)**, against a
+predict-the-mean baseline. SVR and the ANN are tuned by nested cross-validation.
+
+Each model is scored under two validation protocols and on two feature sets (with and
+without the consolidation results Mv and Cv).
+
+## Results
+
+### Deployed models
+
+| Target | Deployed model | Feature set | Unseen site R² / RMSE | Shuffled R² / RMSE |
+|---|---|---|---|---|
+| Cu_kPa | Extra Trees | no_mvcv | 0.38 / 12.83 kPa | 0.74 / 8.28 kPa |
+| Phi_deg | XGBoost | no_mvcv | 0.32 / 3.28° | 0.82 / 1.70° |
+
+Chosen automatically: lowest RMSE on unseen sites, across both feature sets. Both winners
+happen to be the variants that do **not** use Mv/Cv; the margins over the next candidate
+are small (Cu 0.13 kPa, Phi 0.006°) and should be read as ties.
+
+### Cu_kPa — all models (227 rows, 9 sites)
+
+| Model | Unseen site R² | Unseen site RMSE (kPa) | Unseen site RMSE, no Mv/Cv (kPa) | Shuffled R² | Shuffled RMSE (kPa) |
+|---|---|---|---|---|---|
+| Extra Trees | +0.36 | 13.01 | 12.83 | +0.83 | 6.76 |
+| Gradient Boosting | +0.17 | 14.78 | 12.95 | +0.80 | 7.29 |
+| XGBoost | +0.22 | 14.31 | 13.21 | +0.81 | 7.15 |
+| Random Forest | +0.24 | 14.18 | 13.77 | +0.78 | 7.69 |
+| SVR | +0.12 | 15.26 | 14.58 | +0.70 | 8.84 |
+| ANN (MLP) | +0.12 | 15.23 | 14.95 | +0.73 | 8.40 |
+| Mean Baseline | -0.18 | 17.63 | 17.63 | -0.02 | 16.40 |
+| Ridge Regression | -3.06 | 32.70 | 25.85 | +0.47 | 11.82 |
+| Linear Regression | -6.12 | 43.30 | 28.96 | +0.47 | 11.86 |
+
+### Phi_deg — all models (228 rows, 9 sites)
+
+| Model | Unseen site R² | Unseen site RMSE (°) | Unseen site RMSE, no Mv/Cv (°) | Shuffled R² | Shuffled RMSE (°) |
+|---|---|---|---|---|---|
+| XGBoost | +0.28 | 3.36 | 3.28 | +0.82 | 1.66 |
+| Extra Trees | +0.31 | 3.29 | 3.38 | +0.87 | 1.40 |
+| Random Forest | +0.18 | 3.59 | 3.39 | +0.77 | 1.88 |
+| Gradient Boosting | +0.10 | 3.76 | 3.42 | +0.79 | 1.81 |
+| ANN (MLP) | -0.12 | 4.20 | 3.79 | +0.84 | 1.57 |
+| SVR | +0.07 | 3.82 | 3.89 | +0.80 | 1.77 |
+| Mean Baseline | -0.04 | 4.04 | 4.04 | -0.01 | 3.99 |
+| Linear Regression | -0.35 | 4.61 | 4.12 | +0.59 | 2.56 |
+| Ridge Regression | -0.58 | 4.99 | 4.45 | +0.47 | 2.89 |
+
+"Unseen site" = leave-one-site-out. "Shuffled" = shuffled 5-fold, the protocol of the
+original notebooks. Full table with MAE and per-fold statistics:
+`outputs/{cu,phi}_model_comparison.csv`.
+
+### What the results say
+
+1. **Shuffled cross-validation overstates accuracy by a wide margin.** Each workbook is
+   one site and samples within a site resemble each other, so shuffled folds let a model
+   look up near-copies of the test row. R² falls from about 0.8 to about 0.3 when the
+   site is genuinely new.
+2. **ANN and SVR do not beat the tree ensembles.** Under shuffled CV the ANN is
+   competitive (Phi R² 0.84); on unseen sites both are close to the predict-the-mean
+   baseline. With nine sites there is too little between-site information for any model.
+3. **Mv and Cv add nothing for a new site.** Removing them leaves the best unseen-site
+   error unchanged or slightly better for both targets.
+4. **Linear models extrapolate badly** to a new site (RMSE above the baseline).
+5. **Error is uneven across sites** (`outputs/*_site_errors.csv`): Cu RMSE ranges from
+   1.5 kPa (site 0) to 17.8 kPa (site 3) among sites with five or more rows.
+6. **Held-out feature importance for Cu is indistinguishable from noise**
+   (`outputs/cu_feature_importance.csv`): no single feature reliably helps on a new site.
+
+Figures: `outputs/figures/`. Interactive walk-through: `notebooks/Model_Comparison.ipynb`.
+
+## Project structure
+
+```
+datasets/      raw Excel workbooks, one per site
+training/      data loading, model zoo, evaluation, training CLI, figures
+app/           FastAPI service (features, model service, schemas, routes)
+tests/         pytest suite
+notebooks/     results notebook, original modelling notebooks, legacy/
+outputs/       trained models, metadata, comparison tables, figures
+ui/            React web interface
 ```
 
----
+## API
 
-## 🔌 API Endpoints
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/health` | Returns model-load status for both models |
-| `POST` | `/predict/cu` | Predict **Cu_kPa** (undrained shear strength) |
-| `POST` | `/predict/phi` | Predict **Phi_deg** (friction angle) |
-| `GET` | `/model-info/cu` | Cu model class, CV results, feature importances |
-| `GET` | `/model-info/phi` | Phi model class, CV results, feature importances |
+| `GET` | `/health` | Model and explainer load status |
+| `POST` | `/predict` | Cu and Phi with SHAP explanations and out-of-range warnings |
+| `POST` | `/predict/cu`, `/predict/phi` | Single-target prediction |
+| `POST` | `/explain` | SHAP explanations only |
+| `GET` | `/model-info/cu`, `/model-info/phi` | Comparison table, importances, deployment metadata |
 
----
+Physically impossible inputs (PL above LL, negative values, gradation above 100 %) are
+rejected with `422`. Inputs outside the range of the training data are accepted and
+reported in `out_of_range`.
 
-## 📊 Model Performance (Actual Results)
-Six regression algorithms were compared using **5-fold shuffled cross-validation**. Results below are **out-of-fold (OOF)** metrics on the full training set.
+## Limitations
 
-### Cu_kPa — Undrained Shear Strength
-| Model | OOF R² | OOF RMSE | OOF MAE |
-|---|---|---|---|
-| **Extra Trees** ⭐ | **0.826** | **7.84 kPa** | **5.96 kPa** |
-| XGBoost | 0.791 | 7.33 kPa | 5.75 kPa |
-| Gradient Boosting | 0.755 | 7.98 kPa | 6.08 kPa |
-| Random Forest | 0.733 | 8.33 kPa | 6.44 kPa |
-| Linear Regression | 0.495 | 11.44 kPa | 9.32 kPa |
-| Ridge Regression | 0.462 | 11.81 kPa | 9.65 kPa |
+- Nine sites. Accuracy on a new site is modest (R² about 0.3–0.4) and varies a lot from
+  site to site; predictions are a screening aid, not a substitute for testing.
+- Target ranges are narrow (Cu 0–85 kPa, Phi 2–18°); the models cannot predict beyond them.
+- See `AGENT.md` for data details, conventions and open questions.
 
-### Phi_deg — Friction Angle
-| Model | OOF R² | OOF RMSE | OOF MAE |
-|---|---|---|---|
-| **Extra Trees** ⭐ | **0.875** | **1.67°** | **1.27°** |
-| XGBoost | 0.825 | 1.66° | 1.12° |
-| Gradient Boosting | 0.796 | 1.79° | 1.22° |
-| Random Forest | 0.775 | 1.88° | 1.29° |
-| Linear Regression | 0.585 | 2.56° | 2.01° |
-| Ridge Regression | 0.471 | 2.89° | 2.33° |
+## References
 
-### Top Predictive Features
-**Cu_kPa:** `LL`, `Cv_to_Mv_Ratio`, `Compression_x_Plasticity`, `Density_x_Fines`, `Mv_50kPa`
-
-**Phi_deg:** `Sat_Unit_Wt_kN_m3`, `Mv_50kPa`, `Cv_50kPa`, `Density_x_Sand`, `LL`
-
----
-
-## ⚙️ Feature Engineering
-The API replicates the **exact same** feature transformations used during training — ensuring zero drift between research notebooks and production inference.
-
-### Cu_kPa — 7 raw inputs → 15 model features
-| Engineered Feature | Formula |
-|---|---|
-| `PI_calc` | `LL − PL` |
-| `LL_to_PL_Ratio` | `LL / PL` |
-| `Plasticity_to_LL` | `PI_calc / LL` |
-| `Coarse_Fraction_pct` | `100 − Fines_Content_pct` |
-| `Sand_to_Fines_Ratio` | `Sand / (Fines + 1)` |
-| `Cv_to_Mv_Ratio` | `Cv_50kPa / Mv_50kPa` |
-| `Density_x_Fines` | `Sat_Unit_Wt_kN_m3 × Fines_Content_pct` |
-| `Compression_x_Plasticity` | `Mv_50kPa × PI_calc` |
-
-### Phi_deg — 8 raw inputs → 14 model features
-| Engineered Feature | Formula |
-|---|---|
-| `PI_calc` | `LL − PL` |
-| `Plasticity_to_LL` | `PI_calc / LL` |
-| `Coarse_Fraction_pct` | `100 − Fines_Content_pct` |
-| `Sand_to_Fines_Ratio` | `Sand / (Fines + 1)` |
-| `Gravel_to_Sand_Ratio` | `Gravel / (Sand + 1)` |
-| `Mv_to_Cv_Ratio` | `Mv_50kPa / Cv_50kPa` |
-| `Density_x_Sand` | `Sat_Unit_Wt_kN_m3 × Sand_Fraction_pct` |
-
----
-
-## 🧬 Notebook Pipeline
-If retraining from scratch, run the notebooks in order:
-
-### Phase 1 — Data Merging
-```bash
-python datasets_merger.py
-```
-**Output:** `geotechnical_master_raw.csv`
-
-### Phase 2 — Data Cleaning
-```bash
-jupyter notebook notebooks/Data_Cleaning.ipynb
-```
-Key operations: Atterberg consistency validation ($PI = LL - PL$), outlier removal, unit standardisation (kPa, kN/m³).
-**Output:** `geotechnical_cleaned.csv`
-
-### Phase 3 — Feature Engineering
-```bash
-jupyter notebook notebooks/Feature_Engineering.ipynb
-```
-**Output:** `geotechnical_engineered.csv`
-
-### Phase 4a — Cu_kPa Model Training
-```bash
-jupyter notebook notebooks/Cu_Target_Modeling.ipynb
-```
-**Outputs:** `outputs/cu_best_model.joblib`, `outputs/cu_model_comparison.csv`, `outputs/cu_feature_importance.csv`
-
-### Phase 4b — Phi_deg Model Training
-```bash
-jupyter notebook notebooks/Phi_Target_Modeling.ipynb
-```
-**Outputs:** `outputs/phi_best_model.joblib`, `outputs/phi_model_comparison.csv`, `outputs/phi_feature_importance.csv`
-
----
-
-## 🧪 Validation Strategy
-### 5-Fold Shuffled Cross-Validation
-All models undergo 5-fold shuffled cross-validation. This ensures that every sample in the dataset is used for evaluation exactly once, providing a stable and unbiased estimate of generalisation performance on unseen soil records.
-
-### Geotechnical Domain Validation
-- Physical boundary enforcement (φ: 0–50°, Cu: 0–500 kPa)
-- Atterberg consistency checks ($PI = LL - PL$ must be positive)
-- Finite/non-null assertions in the feature pipeline
-
----
-
-## 🔧 Troubleshooting
-| Issue | Solution |
-|---|---|
-| `FileNotFoundError` on `datasets_merger.py` | Ensure Excel files are in `datasets/` with naming pattern `geotechnical_data_*.xlsx` |
-| `API returns 503 Service Unavailable` | Model `.joblib` files are missing from `outputs/` — re-run the training notebooks |
-| `422 Unprocessable Entity` on prediction | Check all required fields are present and numeric (no nulls or `NaN`) |
-| `Low R² scores on retrain` | Verify target variable completeness and check for data leakage in group folds |
-
----
-
-## 📚 Technical References
-### Geotechnical Formulas
-**Liquidity Index:**
-$$LI = \frac{W_n - PL}{LL - PL}$$
-**Plasticity Index:**
-$$PI = LL - PL$$
-### Literature
 - Terzaghi, K., Peck, R. B., & Mesri, G. (1996). *Soil Mechanics in Engineering Practice*.
-- Robertson, P. K. (2009). *Interpretation of cone penetration tests — a unified approach*.
-- Kulhawy, F. H., & Mayne, P. W. (1990). *Manual on estimating soil properties for foundation design*.
-
----
-
-## 👨‍💻 Author
-**Senior Machine Learning Engineer**  
-Geotechnical Predictive Analytics Team
+- Kulhawy, F. H., & Mayne, P. W. (1990). *Manual on Estimating Soil Properties for Foundation Design*.

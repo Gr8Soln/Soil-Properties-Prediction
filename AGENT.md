@@ -1,552 +1,232 @@
 # AGENT.md — Soil-Properties-Prediction
 
-> Onboarding guide for AI coding assistants working on this codebase.
-> Read this file before making any changes to the project.
+> Onboarding guide for AI coding assistants. Read before changing anything.
+> `CLAUDE.md` holds the short list of commands and hard rules.
 
----
+## What this is
 
-## Project Identity
+Final-year machine-learning project in geotechnical engineering. It predicts two soil
+shear-strength parameters from routine laboratory index tests:
 
-**Name:** Geotechnical Shear Strength Predictive Suite  
-**Domain:** Geotechnical engineering — soil mechanics and shear strength analysis  
-**Purpose:** End-to-end ML pipeline and production inference system that predicts two critical soil parameters from borehole/laboratory data:
+| Target | Column | Unit | Range in the data |
+|---|---|---|---|
+| Undrained cohesion | `Cu_kPa` | kPa | 0–85 |
+| Angle of internal friction | `Phi_deg` | degrees | 2–18 |
 
-| Target | Symbol | Unit | Physical Meaning | Domain Bounds |
+Three parts: a training pipeline (`training/`), a FastAPI inference service with SHAP
+explanations (`app/`), and a React UI (`ui/`).
+
+## Layout
+
+```
+datasets/geotechnical_data_{0-9}.xlsx   raw data, one workbook per site (do not edit)
+training/
+  data.py        load + harmonise workbooks, keeps the Site label
+  models.py      model zoo: 6 original regressors + SVR + ANN + mean baseline
+  evaluate.py    shuffled 5-fold and leave-one-site-out CV, nested tuning, importance
+  train.py       runs everything, picks and saves the deployed model per target
+  report.py      figures for the write-up -> outputs/figures/
+app/
+  feature_engineering.py   THE feature code, shared by training and the API
+  model_service.py         loads model + metadata, predicts, explains (SHAP)
+  schemas.py               Pydantic request/response models and input validation
+  main.py                  routes
+tests/           data counts, feature parity, API behaviour (pytest)
+notebooks/
+  Model_Comparison.ipynb              results notebook (reads outputs/, trains nothing)
+  Unified_Geotechnical_Modeling.ipynb original harmonisation notebook (historical)
+  Cu_Target_Modeling.ipynb, Phi_Target_Modeling.ipynb   original 6-model notebooks (historical)
+  legacy/                             early exploration; inputs no longer exist
+outputs/         everything training writes (see "Artifacts")
+ui/              TanStack Start + React 19 + Vite + Tailwind 4 + shadcn/ui, Bun
+```
+
+## Data
+
+- 10 workbooks, 316 raw rows. Workbooks 4 and 5 are identical, so exact-duplicate removal
+  leaves 258 rows from **9 sites**; 227 have every input plus Cu, 228 plus Phi.
+- **Each workbook is one site investigation.** This is the grouping unit for validation.
+- Sites are unequal: site 9 contributes 2 rows (both Cu = 0), site 0 contributes 5.
+- Phi takes only 15 distinct values. 13 rows share identical inputs; two of those groups
+  have different Cu, so some of the error is irreducible.
+- Harmonisation rules (`training/data.py`, ported unchanged from the Unified notebook):
+  header variants renamed; unit weights between 0.8 and 3.0 treated as density and
+  multiplied by 9.81; PI rebuilt as LL − PL when missing or inconsistent; values outside
+  broad physical ranges set to missing; gradation derived from sieve columns
+  (fines = passing 0.075 mm, sand = passing 2.00/2.36 mm − fines, gravel = remainder).
+- Files named like `geotechnical_data_3 copy.xlsx` are ignored by the loaders.
+
+## Features
+
+Raw inputs: `LL`, `PL`, `Sat_Unit_Wt_kN_m3`, `Mv_50kPa`, `Cv_50kPa`, `Fines_Content_pct`,
+`Sand_Fraction_pct`, and for Phi also `Gravel_Fraction_pct`.
+
+| Feature | Formula | Cu | Phi |
+|---|---|---|---|
+| `PI_calc` | LL − PL | yes | yes |
+| `LL_to_PL_Ratio` | LL / max(PL, 1e-6) | yes | |
+| `Plasticity_to_LL` | PI_calc / max(LL, 1e-6) | yes | yes |
+| `Coarse_Fraction_pct` | 100 − Fines | yes | yes |
+| `Sand_to_Fines_Ratio` | Sand / (Fines + 1) | yes | yes |
+| `Gravel_to_Sand_Ratio` | Gravel / (Sand + 1) | | yes |
+| `Cv_to_Mv_Ratio` | Cv / max(Mv, 1e-6) | yes | |
+| `Mv_to_Cv_Ratio` | Mv / max(Cv, 1e-6) | | yes |
+| `Density_x_Fines` | Sat_Unit_Wt × Fines | yes | |
+| `Density_x_Sand` | Sat_Unit_Wt × Sand | | yes |
+| `Compression_x_Plasticity` | Mv × PI_calc | yes | |
+
+Two feature sets (`build_features(target, frame, feature_set)`):
+
+- `full` — everything above: 15 columns for Cu, 14 for Phi.
+- `no_mvcv` — without Mv, Cv and the three features derived from them: 11 columns each.
+
+Column order is fixed by `feature_columns()` and checked against the model at inference.
+
+## Validation — read this before quoting any number
+
+| Protocol | Name in files | What it measures |
+|---|---|---|
+| Shuffled 5-fold | `shuffled_5fold` | Interpolation between samples of sites already seen. Flattering. |
+| Leave-one-site-out | `site_holdout` | Accuracy on a site the model never saw. **Headline score; selects the deployed model.** |
+
+The original notebooks reported only shuffled scores (Cu R² 0.826, Phi R² 0.875). Those
+numbers are reproducible but do not describe performance on a new site.
+
+SVR and the ANN are tuned inside every training fold (nested CV, inner split of the same
+kind as the outer one). The six original models keep their fixed notebook settings.
+
+## Results (from `python -m training.train`)
+
+### Deployed models
+
+| Target | Deployed model | Feature set | Unseen site R² / RMSE | Shuffled R² / RMSE |
 |---|---|---|---|---|
-| Undrained Cohesion | Cu_kPa | kPa | Shear strength under undrained conditions | 0–500 kPa |
-| Angle of Internal Friction | Phi_deg (φ) | degrees | Soil's resistance to shearing | 0–50° |
+| Cu_kPa | Extra Trees | no_mvcv | 0.38 / 12.83 kPa | 0.74 / 8.28 kPa |
+| Phi_deg | XGBoost | no_mvcv | 0.32 / 3.28° | 0.82 / 1.70° |
 
-**Best models for both targets:** ExtraTreesRegressor (Cu R²=0.826, Phi R²=0.875)
+Chosen automatically: lowest RMSE on unseen sites, across both feature sets. Both winners
+happen to be the variants that do **not** use Mv/Cv; the margins over the next candidate
+are small (Cu 0.13 kPa, Phi 0.006°) and should be read as ties.
 
----
+### Cu_kPa — all models (227 rows, 9 sites)
 
-## Architecture Overview
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                        DATA PIPELINE                             │
-│                                                                  │
-│  datasets/*.xlsx ──► datasets_merger.py ──► master_raw.csv       │
-│                                                 │                │
-│  notebooks/Unified_Geotechnical_Modeling.ipynb   │                │
-│  notebooks/Data_Cleaning.ipynb                   ▼                │
-│  notebooks/Feature_Engineering.ipynb        cleaned/engineered   │
-│  notebooks/Cu_Target_Modeling.ipynb              │                │
-│  notebooks/Phi_Target_Modeling.ipynb             ▼                │
-│                                          outputs/*.joblib         │
-│                                          outputs/*.csv            │
-└──────────────────────────────────────────────────────────────────┘
-                              │
-                    loads at startup
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                     FASTAPI BACKEND (app/)                        │
-│                                                                  │
-│  main.py ◄── schemas.py (Pydantic v2 models)                    │
-│     │                                                            │
-│     ├── model_service.py (load, predict, explain)                │
-│     │       │                                                    │
-│     │       ├── feature_engineering.py (build_cu/phi_features)   │
-│     │       ├── joblib models (ExtraTreesRegressor)              │
-│     │       └── SHAP TreeExplainer                               │
-│     │                                                            │
-│     └── CSV readers (model_comparison, feature_importance)       │
-└──────────────────────────────────────────────────────────────────┘
-                              │
-                     HTTP (JSON REST)
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                    FRONTEND UI (ui/)                              │
-│                                                                  │
-│  TanStack Start (SSR) + React 19 + Vite 7                       │
-│     │                                                            │
-│     ├── routes/index.tsx ........... Landing page & Research Hub  │
-│     └── routes/predict.tsx ......... Prediction Suite & SHAP      │
-│     │                                                            │
-│     ├── lib/predict-api.ts ......... API client (fetch wrapper)  │
-│     ├── components/ ................ Custom + shadcn/ui           │
-│     └── styles.css ................. Tailwind CSS 4              │
-└──────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Tech Stack
-
-### Backend (`app/`)
-| Layer | Technology | Version Constraint |
-|---|---|---|
-| Framework | FastAPI | ≥0.109.0 |
-| Validation | Pydantic v2 | ≥2.0.0 |
-| ML Models | scikit-learn (ExtraTreesRegressor) | ≥1.2.0 |
-| Explainability | SHAP (TreeExplainer) | ≥0.45.0 |
-| Boosting | XGBoost (training only) | ≥1.7.0 |
-| Serialization | joblib | ≥1.2.0 |
-| Server | uvicorn | ≥0.27.0 |
-| Data | pandas, numpy | ≥1.5.0, ≥1.23.0 |
-
-### Frontend (`ui/`)
-| Layer | Technology | Version |
-|---|---|---|
-| Runtime | React 19 | ^19.2.0 |
-| SSR Framework | TanStack Start | 1.168.60 (CVE-2026-102989 patch) |
-| Router | TanStack Router (file-based) | ^1.168.25 |
-| Data Fetching | TanStack React Query | ^5.83.0 |
-| Build | Vite 7 | ^7.3.1 |
-| CSS | Tailwind CSS 4 | ^4.2.1 |
-| Component Library | shadcn/ui (New York variant) | — |
-| Charts | Recharts | ^3.8.1 |
-| Forms | react-hook-form + zod | ^7.71.2, ^3.24.2 |
-| Icons | lucide-react | ^0.575.0 |
-| Package Manager | Bun | — |
-| Deployment | Cloudflare Workers (Nitro) | — |
-
-### ML Pipeline (`notebooks/`)
-| Tool | Usage |
-|---|---|
-| Jupyter / IPython | Interactive notebook environment |
-| pandas / numpy | Data wrangling |
-| scikit-learn | Model training, cross-validation, permutation importance |
-| XGBoost | Alternative model comparison |
-| matplotlib / seaborn | Visualization |
-| openpyxl | Reading .xlsx files |
-
----
-
-## Project Structure
-
-```
-Soil-Properties-Prediction/
-│
-├── AGENT.md                          # This file — AI assistant guide
-├── README.md                         # Human-facing documentation
-├── requirements.txt                  # Python dependencies
-├── .env.sample                       # Backend env template (CORS_ORIGINS=)
-├── .gitignore                        # Git ignore rules
-├── datasets_merger.py                # Phase 1: Merge 10 Excel files → CSV
-│
-├── app/                              # FastAPI inference service
-│   ├── __init__.py                   # Package marker (empty)
-│   ├── main.py                       # API routes, startup, CORS, CSV readers
-│   ├── schemas.py                    # Pydantic v2 request/response models
-│   ├── feature_engineering.py        # build_cu_features() & build_phi_features()
-│   └── model_service.py              # ModelService: load, predict, explain (SHAP)
-│
-├── notebooks/                        # Jupyter ML pipeline
-│   ├── Unified_Geotechnical_Modeling.ipynb  # Phase 0: Data extraction & harmonization
-│   ├── Data_Cleaning.ipynb                  # Phase 1 (legacy): Atterberg cleaning
-│   ├── Feature_Engineering.ipynb            # Phase 2 (legacy): LI, qc_est derivation
-│   ├── Comparative_Analysis.ipynb           # Phase 3 (legacy): Multi-output comparison
-│   ├── Cu_Target_Modeling.ipynb             # Phase 4a: Cu model training (PRODUCTION)
-│   └── Phi_Target_Modeling.ipynb            # Phase 4b: Phi model training (PRODUCTION)
-│
-├── datasets/                         # Raw input data (10 Excel workbooks)
-│   └── geotechnical_data_{0-9}.xlsx
-│
-├── outputs/                          # Trained artifacts & evaluation files
-│   ├── cu_best_model.joblib          # ExtraTreesRegressor — Cu_kPa
-│   ├── phi_best_model.joblib         # ExtraTreesRegressor — Phi_deg
-│   ├── cu_model_comparison.csv       # CV results for all 6 Cu models
-│   ├── phi_model_comparison.csv      # CV results for all 6 Phi models
-│   ├── cu_feature_importance.csv     # Permutation importances — Cu
-│   ├── phi_feature_importance.csv    # Permutation importances — Phi
-│   ├── cu_oof_predictions.csv        # Out-of-fold predictions — Cu
-│   ├── phi_oof_predictions.csv       # Out-of-fold predictions — Phi
-│   ├── geotechnical_training_ready.csv       # Joint training dataset
-│   ├── geotechnical_cu_training_ready.csv    # Cu-specific (227 rows × 11 cols)
-│   ├── geotechnical_phi_training_ready.csv   # Phi-specific (228 rows × 11 cols)
-│   └── geotechnical_modeling_dataset.csv     # Intermediate dataset
-│
-├── ui/                               # Frontend (TanStack Start + React 19)
-│   ├── package.json                  # Dependencies & scripts (bun)
-│   ├── vite.config.ts                # Vite 7 + TanStack Start + Tailwind + Nitro
-│   ├── tsconfig.json                 # TypeScript strict, path alias @/* → ./src/*
-│   ├── components.json               # shadcn/ui config (New York, slate, lucide)
-│   ├── eslint.config.js              # ESLint + Prettier
-│   ├── bunfig.toml                   # Bun configuration
-│   ├── vercel.json                   # Vercel SPA rewrite rules
-│   ├── wrangler.jsonc                # Cloudflare Workers config
-│   ├── .env.sample                   # VITE_API_BASE_URL=
-│   │
-│   └── src/
-│       ├── router.tsx                # TanStack Router factory with QueryClient
-│       ├── server.ts                 # Cloudflare Workers entry (SSR error handling)
-│       ├── start.ts                  # TanStack Start instance with error middleware
-│       ├── styles.css                # Tailwind CSS 4 entry
-│       ├── routeTree.gen.ts          # Auto-generated route tree (DO NOT EDIT)
-│       │
-│       ├── routes/                   # File-based routing
-│       │   ├── __root.tsx            # Root layout (Navbar + Outlet + Footer)
-│       │   ├── index.tsx             # Landing page (hero, benchmarks, feature pipeline, CTA)
-│       │   └── predict.tsx           # Prediction form + gauge results + SHAP + visuals
-│       │
-│       ├── components/               # Custom components
-│       │   ├── AlertBox.tsx          # Warning/info/success alert (lucide icons)
-│       │   ├── ChartCard.tsx         # Card wrapper for chart containers (h-72)
-│       │   ├── ChartTabs.tsx         # Tabbed charts (importance, distribution, avp)
-│       │   ├── Footer.tsx            # Site footer with disclaimer
-│       │   ├── InputField.tsx        # Labeled numeric input with unit
-│       │   ├── Navbar.tsx            # Sticky nav with route links + theme toggle
-│       │   ├── PredictionForm.tsx    # 8-field soil input form with defaults
-│       │   ├── ResultCard.tsx        # Large-number display card for predictions
-│       │   ├── ShapExplanation.tsx   # SHAP tabs (Cu/Phi) with table + bar + waterfall
-│       │   ├── ThemeToggle.tsx       # Dark/light mode (localStorage + class toggle)
-│       │   ├── TrainingVisuals.tsx   # Static training image cards
-│       │   └── ui/                   # shadcn/ui primitives (DO NOT MANUALLY EDIT)
-│       │
-│       ├── lib/
-│       │   ├── predict-api.ts        # API client: predictSoil(), types, error parsing
-│       │   ├── utils.ts              # cn() — clsx + tailwind-merge
-│       │   ├── error-capture.ts      # Global error/rejection capture for SSR
-│       │   └── error-page.ts         # Static HTML error fallback page
-│       │
-│       └── hooks/
-│           └── use-mobile.tsx        # Mobile breakpoint hook
-│
-├── actual_vs_predicted.png           # Training diagnostic chart
-└── correlation_heatmap.png           # Feature correlation heatmap
-```
-
----
-
-## Backend API Reference (`app/`)
-
-### API Routes
-
-| Method | Path | Request Body | Response Model | Tag | Description |
+| Model | Unseen site R² | Unseen site RMSE (kPa) | Unseen site RMSE, no Mv/Cv (kPa) | Shuffled R² | Shuffled RMSE (kPa) |
 |---|---|---|---|---|---|
-| `GET` | `/` | — | `Dict` | — | Service info links (hidden from OpenAPI schema) |
-| `GET` | `/health` | — | `HealthResponse` | Monitoring | Model/explainer load status |
-| `POST` | `/predict/cu` | `CuPredictionRequest` | `PredictionResponse` | Prediction | Predict Cu_kPa only |
-| `POST` | `/predict/phi` | `PhiPredictionRequest` | `PredictionResponse` | Prediction | Predict Phi_deg only |
-| `POST` | `/predict` | `UnifiedPredictionRequest` | `UnifiedPredictionResponse` | Prediction | Predict both + SHAP |
-| `POST` | `/explain` | `UnifiedPredictionRequest` | `ExplanationResponse` | Explanation | SHAP only (no predictions) |
-| `GET` | `/model-info/cu` | — | `Dict` | Model Info | Cu model metadata + CSV data |
-| `GET` | `/model-info/phi` | — | `Dict` | Model Info | Phi model metadata + CSV data |
+| Extra Trees | +0.36 | 13.01 | 12.83 | +0.83 | 6.76 |
+| Gradient Boosting | +0.17 | 14.78 | 12.95 | +0.80 | 7.29 |
+| XGBoost | +0.22 | 14.31 | 13.21 | +0.81 | 7.15 |
+| Random Forest | +0.24 | 14.18 | 13.77 | +0.78 | 7.69 |
+| SVR | +0.12 | 15.26 | 14.58 | +0.70 | 8.84 |
+| ANN (MLP) | +0.12 | 15.23 | 14.95 | +0.73 | 8.40 |
+| Mean Baseline | -0.18 | 17.63 | 17.63 | -0.02 | 16.40 |
+| Ridge Regression | -3.06 | 32.70 | 25.85 | +0.47 | 11.82 |
+| Linear Regression | -6.12 | 43.30 | 28.96 | +0.47 | 11.86 |
 
-### Pydantic Schema Hierarchy
+### Phi_deg — all models (228 rows, 9 sites)
 
-```
-SoilInputBase (7 fields: LL, PL, Sat_Unit_Wt_kN_m3, Mv_50kPa, Cv_50kPa, Fines_Content_pct, Sand_Fraction_pct)
-├── CuPredictionRequest    (inherits 7 fields — no extras)
-└── PhiPredictionRequest   (adds Gravel_Fraction_pct — 8 fields total)
-    └── UnifiedPredictionRequest (same 8 fields — used for /predict and /explain)
-```
+| Model | Unseen site R² | Unseen site RMSE (°) | Unseen site RMSE, no Mv/Cv (°) | Shuffled R² | Shuffled RMSE (°) |
+|---|---|---|---|---|---|
+| XGBoost | +0.28 | 3.36 | 3.28 | +0.82 | 1.66 |
+| Extra Trees | +0.31 | 3.29 | 3.38 | +0.87 | 1.40 |
+| Random Forest | +0.18 | 3.59 | 3.39 | +0.77 | 1.88 |
+| Gradient Boosting | +0.10 | 3.76 | 3.42 | +0.79 | 1.81 |
+| ANN (MLP) | -0.12 | 4.20 | 3.79 | +0.84 | 1.57 |
+| SVR | +0.07 | 3.82 | 3.89 | +0.80 | 1.77 |
+| Mean Baseline | -0.04 | 4.04 | 4.04 | -0.01 | 3.99 |
+| Linear Regression | -0.35 | 4.61 | 4.12 | +0.59 | 2.56 |
+| Ridge Regression | -0.58 | 4.99 | 4.45 | +0.47 | 2.89 |
 
-**Response models:**
-- `PredictionResponse`: `prediction`, `target`, `model`
-- `UnifiedPredictionResponse`: `predictions` (cu_kpa, phi_deg), `models` (cu, phi), `shap` (ShapBundle)
-- `ExplanationResponse`: `models`, `shap`
-- `HealthResponse`: `status`, `cu_model_loaded`, `phi_model_loaded`, `cu_explainer_loaded`, `phi_explainer_loaded`
-- `ShapBundle`: contains `cu` and `phi` ShapTargetExplanation objects
-- `ShapTargetExplanation`: `base_value`, `features`, `positive`, `negative`, `bar`, `waterfall`, `summary`
+"Unseen site" = leave-one-site-out. "Shuffled" = shuffled 5-fold, the protocol of the
+original notebooks. Full table with MAE and per-fold statistics:
+`outputs/{cu,phi}_model_comparison.csv`.
 
-### ModelService Lifecycle
+### What the results say
 
-1. **Startup:** `model_service.load()` called in FastAPI `startup_event`
-2. **Load:** `joblib.load()` each `.joblib` → stores model + builds `shap.TreeExplainer`
-3. **Predict:** `build_features(key, payload)` → `model.predict(features)` → scalar float
-4. **Explain:** `explainer.shap_values(features)` → normalized → structured response with waterfall/bar/contribution data
+1. **Shuffled cross-validation overstates accuracy by a wide margin.** Each workbook is
+   one site and samples within a site resemble each other, so shuffled folds let a model
+   look up near-copies of the test row. R² falls from about 0.8 to about 0.3 when the
+   site is genuinely new.
+2. **ANN and SVR do not beat the tree ensembles.** Under shuffled CV the ANN is
+   competitive (Phi R² 0.84); on unseen sites both are close to the predict-the-mean
+   baseline. With nine sites there is too little between-site information for any model.
+3. **Mv and Cv add nothing for a new site.** Removing them leaves the best unseen-site
+   error unchanged or slightly better for both targets.
+4. **Linear models extrapolate badly** to a new site (RMSE above the baseline).
+5. **Error is uneven across sites** (`outputs/*_site_errors.csv`): Cu RMSE ranges from
+   1.5 kPa (site 0) to 17.8 kPa (site 3) among sites with five or more rows.
+6. **Held-out feature importance for Cu is indistinguishable from noise**
+   (`outputs/cu_feature_importance.csv`): no single feature reliably helps on a new site.
 
-### CORS Configuration
-Currently hardcoded `allow_origins=["*"]`. The `.env.sample` has `CORS_ORIGINS=` but this is **not wired up** in `main.py`.
+## Artifacts (`outputs/`, all written by `training.train`)
 
----
-
-## Feature Engineering — CRITICAL INVARIANTS
-
-> **The feature engineering in `app/feature_engineering.py` MUST exactly match the transformations used during model training in the notebooks. Any divergence causes silent prediction errors.**
-
-### Cu_kPa Pipeline: 7 raw inputs → 15 model features
-
-**Raw inputs:** LL, PL, Sat_Unit_Wt_kN_m3, Mv_50kPa, Cv_50kPa, Fines_Content_pct, Sand_Fraction_pct
-
-**Engineered features (8):**
-
-| Feature | Formula | Notes |
-|---|---|---|
-| `PI_calc` | `LL − PL` | Plasticity Index |
-| `LL_to_PL_Ratio` | `LL / max(PL, 1e-6)` | Clipped denominator |
-| `Plasticity_to_LL` | `PI_calc / max(LL, 1e-6)` | Clipped denominator |
-| `Coarse_Fraction_pct` | `100 − Fines_Content_pct` | Complementary fraction |
-| `Sand_to_Fines_Ratio` | `Sand / (Fines + 1)` | +1 prevents div-by-zero |
-| `Cv_to_Mv_Ratio` | `Cv_50kPa / max(Mv_50kPa, 1e-6)` | Consolidation response |
-| `Density_x_Fines` | `Sat_Unit_Wt_kN_m3 × Fines_Content_pct` | Interaction term |
-| `Compression_x_Plasticity` | `Mv_50kPa × PI_calc` | Interaction term |
-
-**Final column order (15):** `LL, PL, Sat_Unit_Wt_kN_m3, Mv_50kPa, Cv_50kPa, Fines_Content_pct, Sand_Fraction_pct, PI_calc, LL_to_PL_Ratio, Plasticity_to_LL, Coarse_Fraction_pct, Sand_to_Fines_Ratio, Cv_to_Mv_Ratio, Density_x_Fines, Compression_x_Plasticity`
-
-### Phi_deg Pipeline: 8 raw inputs → 14 model features
-
-**Raw inputs:** LL, PL, Sat_Unit_Wt_kN_m3, Mv_50kPa, Cv_50kPa, Fines_Content_pct, Sand_Fraction_pct, **Gravel_Fraction_pct**
-
-**Engineered features (6):**
-
-| Feature | Formula | Notes |
-|---|---|---|
-| `PI_calc` | `LL − PL` | Plasticity Index |
-| `Plasticity_to_LL` | `PI_calc / max(LL, 1e-6)` | Clipped denominator |
-| `Coarse_Fraction_pct` | `100 − Fines_Content_pct` | Complementary fraction |
-| `Sand_to_Fines_Ratio` | `Sand / (Fines + 1)` | +1 prevents div-by-zero |
-| `Gravel_to_Sand_Ratio` | `Gravel / (Sand + 1)` | Unique to Phi — granular sensitivity |
-| `Mv_to_Cv_Ratio` | `Mv_50kPa / max(Cv_50kPa, 1e-6)` | **INVERSE of Cu's ratio** |
-| `Density_x_Sand` | `Sat_Unit_Wt_kN_m3 × Sand_Fraction_pct` | **Different from Cu's Density_x_Fines** |
-
-**Final column order (14):** `LL, PL, Sat_Unit_Wt_kN_m3, Mv_50kPa, Cv_50kPa, Fines_Content_pct, Sand_Fraction_pct, PI_calc, Plasticity_to_LL, Coarse_Fraction_pct, Sand_to_Fines_Ratio, Gravel_to_Sand_Ratio, Mv_to_Cv_Ratio, Density_x_Sand`
-
-### Key Differences Between Cu and Phi Pipelines
-
-| Aspect | Cu | Phi |
-|---|---|---|
-| Raw inputs | 7 fields | 8 fields (adds Gravel_Fraction_pct) |
-| Output features | 15 columns | 14 columns |
-| Consolidation ratio | `Cv_to_Mv_Ratio` | `Mv_to_Cv_Ratio` (inverted) |
-| Density interaction | `Density_x_Fines` | `Density_x_Sand` |
-| Has LL_to_PL_Ratio | ✅ Yes | ❌ No |
-| Has Gravel_to_Sand_Ratio | ❌ No | ✅ Yes |
-| Has Compression_x_Plasticity | ✅ Yes | ❌ No |
-
-### Assertions
-Both pipelines assert:
-- No NaN values in the output DataFrame
-- All values are finite (`np.isfinite`)
-- Column order matches the defined `_CU_FEATURE_COLUMNS` / `_PHI_FEATURE_COLUMNS` list exactly
-
----
-
-## Frontend Reference (`ui/`)
-
-### Routes
-
-| Path | File | Purpose |
-|---|---|---|
-| `/` | `routes/index.tsx` | Landing page — hero, benchmarks, feature pipeline, workflow steps, CTA |
-| `/predict` | `routes/predict.tsx` | Prediction interface — form, gauge cards, SHAP explanation, training visuals |
-
-### Component Data Flow (Predict Page)
-
-```
-PredictPage (state: loading, result, error)
-├── PredictionForm ──► onSubmit(input) ──► predictSoil(input) ──► POST /predict
-│   └── InputField × 8 (LL, PL, Sat_Unit_Wt, Mv, Cv, Fines, Sand, Gravel)
-├── AlertBox (error or success)
-├── ResultCard × 2 (Cu_kPa, Phi_deg)
-├── ShapExplanation (tabs: Cu / Phi)
-│   └── TargetView
-│       ├── Summary (base_value, positive, negative, estimate)
-│       ├── ContributionTable (ranked features)
-│       ├── BarImportance (top 10 by |SHAP|)
-│       └── WaterfallData (cumulative SHAP)
-└── TrainingVisuals (static training images)
-```
-
-### API Client Configuration
-- File: `ui/src/lib/predict-api.ts`
-- Base URL: `import.meta.env.VITE_API_BASE_URL` ?? `"http://127.0.0.1:8000"`
-- Endpoint: `POST /predict` with JSON body matching `PredictInput` (8 fields)
-- Error handling: Parses FastAPI `detail` field from error responses
-
-### Environment Variables
-| Variable | File | Purpose | Default |
-|---|---|---|---|
-| `VITE_API_BASE_URL` | `ui/.env` | Backend API URL | `http://127.0.0.1:8000` |
-| `CORS_ORIGINS` | `.env` | CORS allowed origins (NOT WIRED UP) | — |
-
-### Styling Conventions
-- **CSS framework:** Tailwind CSS 4 via `@tailwindcss/vite` plugin
-- **Component library:** shadcn/ui New York variant with slate base color and CSS variables
-- **Path alias:** `@/*` → `./src/*` (configured in tsconfig.json)
-- **Icon library:** lucide-react
-- **Theme:** Dark/light toggle via `dark` class on `<html>` + localStorage persistence
-- **Font:** Inter (loaded from Google Fonts)
-
-### SSR Architecture
-- TanStack Start creates the SSR app via `createStart()` in `start.ts`
-- Nitro handles server-side rendering with Cloudflare Workers compatibility
-- `server.ts` is the Workers entry point with catastrophic SSR error normalization
-- Error middleware catches unhandled errors and returns a branded HTML error page
-
-### Auto-Generated Files (DO NOT MANUALLY EDIT)
-- `src/routeTree.gen.ts` — Auto-generated by TanStack Router plugin from `routes/` directory
-
----
-
-## ML Pipeline Reference (`notebooks/`)
-
-### Two Pipeline Variants
-
-The project contains two data pipeline lineages:
-
-**Modern pipeline (PRODUCTION — generates the deployed models):**
-1. `Unified_Geotechnical_Modeling.ipynb` — Reads 10 Excel workbooks, harmonizes headers/units, deduplicates (SHA-256), exports target-specific dense CSVs
-2. `Cu_Target_Modeling.ipynb` — Cu-specific feature engineering, trains 6 models, exports best model
-3. `Phi_Target_Modeling.ipynb` — Phi-specific feature engineering, trains 6 models, exports best model
-
-**Legacy pipeline (research exploration — not used in production):**
-1. `Data_Cleaning.ipynb` — Atterberg limits recovery from single raw CSV
-2. `Feature_Engineering.ipynb` — LI, synthetic qc_est derivation, correlation heatmap
-3. `Comparative_Analysis.ipynb` — Multi-output regression comparison (RF, HistGBR, SVR)
-
-### Modern Pipeline Details
-
-**Data flow:**
-```
-datasets/geotechnical_data_{0-9}.xlsx
-    ↓ Unified_Geotechnical_Modeling.ipynb
-outputs/geotechnical_cu_training_ready.csv  (227 rows × 11 cols, zero NaN)
-outputs/geotechnical_phi_training_ready.csv (228 rows × 11 cols, zero NaN)
-    ↓ Cu_Target_Modeling.ipynb / Phi_Target_Modeling.ipynb
-outputs/cu_best_model.joblib + outputs/phi_best_model.joblib
-outputs/*_model_comparison.csv + outputs/*_feature_importance.csv
-```
-
-**Models compared (6 per target):**
-
-| Model | Configuration |
+| File | Content |
 |---|---|
-| Linear Regression | Pipeline(StandardScaler + LinearRegression) |
-| Ridge Regression | Pipeline(StandardScaler + Ridge(α=1.0)) |
-| Random Forest | n_estimators=400, min_samples_leaf=2 |
-| Extra Trees | n_estimators=500, min_samples_leaf=2 |
-| Gradient Boosting | learning_rate=0.05, n_estimators=300, max_depth=3 |
-| XGBoost | n_estimators=300, learning_rate=0.05, max_depth=4, subsample=0.9 |
+| `{cu,phi}_best_model.joblib` | deployed model, refit on all rows |
+| `{cu,phi}_model_meta.json` | model name, feature set, feature list, raw inputs, training ranges, metrics, versions |
+| `{cu,phi}_model_comparison.csv` | every model × feature set × protocol |
+| `{cu,phi}_oof_predictions.csv` | out-of-fold predictions of the deployed model, with `Site` |
+| `{cu,phi}_site_errors.csv` | per-site error when that site is held out |
+| `{cu,phi}_feature_importance.csv` | permutation importance on held-out sites (RMSE increase) |
+| `{cu,phi}_tuning_log.csv` | SVR / ANN settings chosen in each fold |
+| `{cu,phi}_shap_background.csv` | training feature matrix, used for SHAP on non-tree models |
+| `geotechnical_*_training_ready.csv` | dense tables with `Site` |
+| `figures/*.png` | written by `training.report` |
 
-**Validation:** 5-fold shuffled KFold CV (RANDOM_STATE=42)  
-**Metrics:** RMSE, MAE, R² (both CV-mean and OOF)  
-**Feature importance:** Permutation importance (30 repeats) on best model
+Stale files from earlier experiments, not read by anything: `cu_model.joblib`,
+`phi_model.joblib`, `*_model_scores.csv`, `geotechnical_modeling_dataset.csv`.
 
-### Model Performance Summary
+## API (`app/`)
 
-**Cu_kPa:**
-| Model | OOF R² | OOF RMSE | OOF MAE |
-|---|---|---|---|
-| **Extra Trees ⭐** | **0.826** | **6.76** | **4.08** |
-| XGBoost | 0.813 | 7.02 | 4.32 |
-| Gradient Boosting | 0.799 | 7.27 | 4.56 |
-| Random Forest | 0.776 | 7.69 | 4.82 |
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/health` | model / explainer load status |
+| POST | `/predict` | both targets + SHAP + `out_of_range` warnings |
+| POST | `/predict/cu`, `/predict/phi` | single target |
+| POST | `/explain` | SHAP only |
+| GET | `/model-info/cu`, `/model-info/phi` | comparison table, importances, deployment metadata |
 
-**Phi_deg:**
-| Model | OOF R² | OOF RMSE | OOF MAE |
-|---|---|---|---|
-| **Extra Trees ⭐** | **0.875** | **1.40** | **0.96** |
-| XGBoost | 0.825 | 1.66 | 1.12 |
-| Gradient Boosting | 0.796 | 1.79 | 1.22 |
-| Random Forest | 0.775 | 1.88 | 1.29 |
+- The service reads `*_model_meta.json` to decide which feature set to build. `Mv_50kPa`
+  and `Cv_50kPa` are optional in the schema and required only if the deployed model's
+  `raw_inputs` list them (422 otherwise). The currently deployed models ignore them.
+- Rejected with 422: PL > LL, negative values, percentages above 100, gradation summing
+  past 100.5 %, unit weight ≤ 0.
+- Inputs outside the training range are **not** rejected; they are listed in
+  `out_of_range` so the caller can show an extrapolation warning.
+- SHAP: `TreeExplainer` for tree models; for SVR / ANN / linear pipelines a
+  model-agnostic explainer over a 100-row sample of `*_shap_background.csv`.
+- CORS is hard-coded to `allow_origins=["*"]`; `.env.sample`'s `CORS_ORIGINS` is unused.
 
-### Top Predictive Features
+## UI (`ui/`)
 
-**Cu_kPa:** LL (0.247), Cv_to_Mv_Ratio (0.167), PL (0.122), Cv_50kPa (0.058), Sand_Fraction_pct (0.042)
+TanStack Start (file-based routes in `src/routes/`: `/`, `/predict`, `/docs`,
+`/research`), React Query, shadcn/ui, Recharts. API client: `src/lib/predict-api.ts`
+(`VITE_API_BASE_URL`, default `http://127.0.0.1:8000`).
 
-**Phi_deg:** Sat_Unit_Wt_kN_m3 (0.237), Mv_50kPa (0.133), PI_calc (0.100), Density_x_Sand (0.076), Gravel_to_Sand_Ratio (0.054)
+Known gaps on this branch:
 
----
+- A redesigned UI lives on `feat/redesign-user-interface` and is not merged here.
+- UI copy and benchmark tables still state "Extra Trees" and the shuffled R² values;
+  they must be updated to the results above.
+- The form still asks for Mv and Cv, which the deployed models do not use.
+- `out_of_range` is typed in the client but not yet displayed.
+- Blank form fields are submitted as 0.
 
-## Development Workflows
+Generated, never hand-edit: `src/routeTree.gen.ts`, `src/components/ui/*`.
 
-### Backend Development
+## Conventions
 
-```bash
-# Environment setup
-python -m venv .venv
-source .venv/bin/activate    # macOS/Linux
-pip install -r requirements.txt
+- Python: type hints, `pathlib`, Pydantic v2; only scikit-learn / xgboost estimator
+  classes in saved models so they unpickle without importing `training`.
+- A new model goes in `training/models.py` as a `ModelSpec`; give it a `param_grid` if
+  it needs tuning. Nothing else has to change.
+- A new feature goes in `app/feature_engineering.py` only, then retrain.
+- Retraining rewrites `outputs/`; commit the model, its metadata and the CSVs together.
+- macOS: xgboost needs `brew install libomp`.
 
-# Start dev server (auto-reload)
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+## Open questions
 
-# API docs (auto-generated)
-# Swagger UI:  http://127.0.0.1:8000/docs
-# ReDoc:       http://127.0.0.1:8000/redoc
-```
-
-### Frontend Development
-
-```bash
-cd ui
-
-# Install dependencies
-bun install
-
-# Start dev server
-bun run dev          # → vite dev
-
-# Build for production
-bun run build        # → vite build
-
-# Preview production build
-bun run preview      # → vite preview
-
-# Lint & format
-bun run lint         # → eslint .
-bun run format       # → prettier --write .
-```
-
-### Full Pipeline Retrain
-
-```bash
-# 1. Merge raw Excel files
-python datasets_merger.py
-# → outputs geotechnical_master_raw.csv
-
-# 2. Run notebooks in order:
-#    a. notebooks/Unified_Geotechnical_Modeling.ipynb
-#    b. notebooks/Cu_Target_Modeling.ipynb
-#    c. notebooks/Phi_Target_Modeling.ipynb
-# → outputs/*.joblib, outputs/*.csv
-
-# 3. Restart API to load new models
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-
----
-
-## Code Conventions
-
-### Python (Backend)
-- **Type hints** on all function signatures
-- **Pydantic v2** for all request/response validation (BaseModel + Field)
-- **FastAPI** tags for endpoint grouping: `Prediction`, `Monitoring`, `Explanation`, `Model Info`
-- **Logging** via `logging.getLogger(__name__)`
-- **Path resolution** via `pathlib.Path` relative to `__file__`
-- **Error responses:** 503 for model not loaded, 422 for feature engineering errors
-- **Division safety:** All ratios use `max(denominator, 1e-6)` or `denominator + 1` to prevent div-by-zero
-
-### TypeScript (Frontend)
-- **Strict mode** TypeScript (`strict: true` in tsconfig)
-- **Path aliases:** `@/` → `./src/` for all imports
-- **TanStack Router** file-based routing — add new routes in `src/routes/`
-- **Component pattern:** Functional components with destructured props + explicit type annotations
-- **State management:** `useState` for local state, React Query for server state
-- **shadcn/ui:** Use `npx shadcn-ui@latest add <component>` to add new primitives — do not manually create files in `components/ui/`
-- **Tailwind:** Use utility classes directly; use `cn()` from `lib/utils.ts` for conditional classes
-- **Form defaults:** Default values provided in `PredictionForm.tsx` for quick testing
-
-### Geotechnical Domain Rules
-- **Atterberg consistency:** PI = LL − PL must always be positive
-- **Gradation constraint:** Fines + Sand + Gravel should ≈ 100%
-- **Physical bounds:** Phi_deg ∈ [0°, 50°], Cu_kPa ∈ [0, 500 kPa], Sat_Unit_Wt ∈ [10, 24.5 kN/m³]
-- **Unit consistency:** All density values in kN/m³, all pressures in kPa, all consolidation in m²/year or m²/kN
-
----
-
-## Critical Rules for AI Agents
-
-1. **Never modify feature engineering without updating BOTH `app/feature_engineering.py` AND the corresponding notebook.** The feature transformations must be identical — same formulas, same column order, same clipping constants.
-
-2. **Never edit `ui/src/routeTree.gen.ts`** — it is auto-generated by TanStack Router. Adding/removing route files in `src/routes/` will regenerate it automatically.
-
-3. **Never manually edit files in `ui/src/components/ui/`** — these are shadcn/ui generated components. Use the shadcn CLI to add or update them.
-
-4. **Column order matters.** The model's `feature_names_in_` must match the order defined in `_CU_FEATURE_COLUMNS` and `_PHI_FEATURE_COLUMNS` in `feature_engineering.py`. Reordering columns will cause silent prediction errors.
-
-5. **The Cu and Phi feature pipelines intentionally differ.** Cu uses `Cv_to_Mv_Ratio` and `Density_x_Fines`; Phi uses the inverse `Mv_to_Cv_Ratio` and `Density_x_Sand`. This is by geotechnical design, not a bug.
-
-6. **Model files in `outputs/` are binary artifacts.** They require the exact scikit-learn version used during training to deserialize correctly. Do not upgrade scikit-learn without retraining.
-
-7. **The `.env.sample` `CORS_ORIGINS` variable is NOT functional.** CORS is hardcoded as `allow_origins=["*"]` in `main.py`. If restricting CORS, modify `main.py` directly.
-
-8. **Preserve all existing comments and docstrings** unrelated to your changes.
-
-9. **When adding new API endpoints**, follow the existing pattern: define Pydantic schemas in `schemas.py`, add route in `main.py`, handle errors with `_service_unavailable()` or `_feature_error()` helpers.
-
-10. **When adding new frontend routes**, create the file in `ui/src/routes/` with `createFileRoute()` and add `head()` metadata for SEO. Update `Navbar.tsx` links array if navigation is needed.
+- Whether to keep the automatically selected no-Mv/Cv models or pin Extra Trees with
+  Mv/Cv (statistically equivalent on unseen sites).
+- More sites would help far more than more algorithms: nine is the binding constraint.
+- The Mv header in workbook 8 carries a different unit label (m²/MN ×10⁻⁴) from the
+  others; magnitudes look consistent but the unit has not been confirmed with the source.

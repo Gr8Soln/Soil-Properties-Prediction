@@ -146,3 +146,67 @@ def build_phi_features(frame: pd.DataFrame) -> pd.DataFrame:
     assert np.isfinite(X.to_numpy()).all(), "Phi feature matrix must be finite."
 
     return X
+
+
+# ---------------------------------------------------------------------------
+# Feature sets
+# ---------------------------------------------------------------------------
+#
+# "full"     – the original feature matrix (uses the oedometer results Mv, Cv).
+# "no_mvcv"  – the same matrix without Mv_50kPa, Cv_50kPa and every feature
+#              derived from them, for when no consolidation test is available.
+
+FEATURE_SETS = ("full", "no_mvcv")
+
+_MVCV_DERIVED = {
+    "Mv_50kPa",
+    "Cv_50kPa",
+    "Cv_to_Mv_Ratio",
+    "Mv_to_Cv_Ratio",
+    "Compression_x_Plasticity",
+}
+
+_FULL_COLUMNS = {"cu": _CU_FEATURE_COLUMNS, "phi": _PHI_FEATURE_COLUMNS}
+_FULL_BUILDERS = {"cu": build_cu_features, "phi": build_phi_features}
+
+
+def feature_columns(target: str, feature_set: str = "full") -> list[str]:
+    """Ordered model feature names for a target ("cu"/"phi") and feature set."""
+    columns = _FULL_COLUMNS[target]
+    if feature_set == "full":
+        return list(columns)
+    if feature_set == "no_mvcv":
+        return [name for name in columns if name not in _MVCV_DERIVED]
+    raise ValueError(f"Unknown feature set: {feature_set!r}")
+
+
+def raw_input_columns(target: str, feature_set: str = "full") -> list[str]:
+    """Raw laboratory inputs a target/feature-set combination needs."""
+    columns = [
+        "LL",
+        "PL",
+        "Sat_Unit_Wt_kN_m3",
+        "Mv_50kPa",
+        "Cv_50kPa",
+        "Fines_Content_pct",
+        "Sand_Fraction_pct",
+    ]
+    if target == "phi":
+        columns.append("Gravel_Fraction_pct")
+    if feature_set == "no_mvcv":
+        columns = [name for name in columns if name not in _MVCV_DERIVED]
+    return columns
+
+
+def build_features(
+    target: str, frame: pd.DataFrame, feature_set: str = "full"
+) -> pd.DataFrame:
+    """Build the feature matrix for a target ("cu"/"phi") and feature set."""
+    f = frame.copy()
+    if feature_set == "no_mvcv":
+        # The full builders need these columns to exist; the derived features
+        # are dropped again below, so the placeholder value never reaches a model.
+        f["Mv_50kPa"] = 1.0
+        f["Cv_50kPa"] = 1.0
+    X = _FULL_BUILDERS[target](f)
+    return X[feature_columns(target, feature_set)].copy()

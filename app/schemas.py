@@ -8,7 +8,7 @@ Two prediction targets are supported:
 
 from typing import List, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -18,21 +18,36 @@ from pydantic import BaseModel, Field
 class SoilInputBase(BaseModel):
     """Raw laboratory measurements shared by both prediction endpoints."""
 
-    LL: float = Field(..., description="Liquid Limit (%)")
-    PL: float = Field(..., description="Plastic Limit (%)")
+    LL: float = Field(..., ge=0, le=200, description="Liquid Limit (%)")
+    PL: float = Field(..., ge=0, le=200, description="Plastic Limit (%)")
     Sat_Unit_Wt_kN_m3: float = Field(
-        ..., description="Saturated Unit Weight (kN/m³)"
+        ..., gt=0, le=30, description="Saturated Unit Weight (kN/m³)"
     )
-    Mv_50kPa: float = Field(
-        ..., description="Coefficient of volume compressibility at 50 kPa (m²/kN)"
+    # Optional in the schema: whether they are needed depends on the feature set of
+    # the deployed model (see ``raw_inputs`` in outputs/*_model_meta.json). A request
+    # that omits one the model needs is rejected with a 422.
+    Mv_50kPa: float | None = Field(
+        None, ge=0, description="Coefficient of volume compressibility at 50 kPa (m²/kN)"
     )
-    Cv_50kPa: float = Field(
-        ..., description="Coefficient of consolidation at 50 kPa (m²/year)"
+    Cv_50kPa: float | None = Field(
+        None, ge=0, description="Coefficient of consolidation at 50 kPa (m²/year)"
     )
     Fines_Content_pct: float = Field(
-        ..., description="Fines content – silt + clay fraction (%)"
+        ..., ge=0, le=100, description="Fines content – silt + clay fraction (%)"
     )
-    Sand_Fraction_pct: float = Field(..., description="Sand fraction (%)")
+    Sand_Fraction_pct: float = Field(..., ge=0, le=100, description="Sand fraction (%)")
+
+    @model_validator(mode="after")
+    def _check_consistency(self) -> "SoilInputBase":
+        if self.PL > self.LL:
+            raise ValueError("PL must not exceed LL (plasticity index would be negative)")
+        gravel = getattr(self, "Gravel_Fraction_pct", 0.0)
+        total = self.Fines_Content_pct + self.Sand_Fraction_pct + gravel
+        if total > 100.5:
+            raise ValueError(
+                f"Fines + Sand + Gravel must not exceed 100% (received {total:.1f}%)"
+            )
+        return self
 
 
 # ---------------------------------------------------------------------------
@@ -61,7 +76,7 @@ class PhiPredictionRequest(SoilInputBase):
     ``Gravel_to_Sand_Ratio`` interaction term in ``build_phi_features``.
     """
 
-    Gravel_Fraction_pct: float = Field(..., description="Gravel fraction (%)")
+    Gravel_Fraction_pct: float = Field(..., ge=0, le=100, description="Gravel fraction (%)")
 
 
 class UnifiedPredictionRequest(PhiPredictionRequest):
@@ -72,12 +87,23 @@ class UnifiedPredictionRequest(PhiPredictionRequest):
 # Shared prediction response
 # ---------------------------------------------------------------------------
 
+class RangeWarning(BaseModel):
+    """An input outside the range covered by the training data (extrapolation)."""
+
+    field: str
+    value: float
+    min: float
+    max: float
+    targets: List[Literal["cu", "phi"]]
+
+
 class PredictionResponse(BaseModel):
     """Single-value prediction result."""
 
     prediction: float = Field(..., description="Predicted value")
     target: str = Field(..., description="Name of the predicted target column")
     model: str = Field(..., description="Name of the model used for prediction")
+    out_of_range: List[RangeWarning] = []
 
 
 class PredictionValues(BaseModel):
@@ -134,6 +160,7 @@ class UnifiedPredictionResponse(BaseModel):
     predictions: PredictionValues
     models: ModelNames
     shap: ShapBundle
+    out_of_range: List[RangeWarning] = []
 
 
 class ExplanationResponse(BaseModel):

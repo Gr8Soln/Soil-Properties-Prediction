@@ -1,0 +1,73 @@
+{
+  "target": "cu",
+  "target_column": "Cu_kPa",
+  "model_name": "Extra Trees",
+  "model_class": "ExtraTreesRegressor",
+  "feature_set": "no_mvcv",
+  "features": [
+    "LL",
+    "PL",
+    "Sat_Unit_Wt_kN_m3",
+    "Fines_Content_pct",
+    "Sand_Fraction_pct",
+    "PI_calc",
+    "LL_to_PL_Ratio",
+    "Plasticity_to_LL",
+    "Coarse_Fraction_pct",
+    "Sand_to_Fines_Ratio",
+    "Density_x_Fines"
+  ],
+  "raw_inputs": [
+    "LL",
+    "PL",
+    "Sat_Unit_Wt_kN_m3",
+    "Fines_Content_pct",
+    "Sand_Fraction_pct"
+  ],
+  "training_ranges": {
+    "LL": [
+      14.9,
+      95.0
+    ],
+    "PL": [
+      3.7,
+      40.6
+    ],
+    "Sat_Unit_Wt_kN_m3": [
+      13.537799999999999,
+      20.5
+    ],
+    "Fines_Content_pct": [
+      12.0,
+      87.8
+    ],
+    "Sand_Fraction_pct": [
+      10.600000000000009,
+      83.0
+    ]
+  },
+  "target_range": [
+    0.0,
+    85.0
+  ],
+  "rows": 227,
+  "sites": 9,
+  "selected_by": "lowest OOF RMSE under site_holdout",
+  "metrics": {
+    "site_holdout": {
+      "rmse": 12.8257,
+      "mae": 9.5956,
+      "r2": 0.375
+    },
+    "shuffled_5fold": {
+      "rmse": 8.2776,
+      "mae": 5.5632,
+      "r2": 0.7397
+    }
+  },
+  "best_params": {},
+  "versions": {
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1"
+  }
+}
