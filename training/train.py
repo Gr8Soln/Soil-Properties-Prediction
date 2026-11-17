@@ -21,7 +21,7 @@ import pandas as pd
 import sklearn
 import xgboost
 
-from app.feature_engineering import FEATURE_SETS, raw_input_columns
+from app.feature_engineering import raw_input_columns
 from training.data import (
     OUTPUT_DIR,
     TARGET_COLUMNS,
@@ -34,6 +34,18 @@ from training.evaluate import SCHEMES, evaluate, fit_spec, held_out_importance, 
 from training.models import BASELINE_NAME, build_model_specs
 
 SELECTION_SCHEME = "site_holdout"
+
+# Deployed (model, feature set) per target, chosen from `python -m training.features_experiment`:
+# the model with the fewest required inputs whose unseen-site error is within bootstrap noise
+# of the best result (every 95% interval vs the original feature set includes zero).
+# Both need only LL, PL, unit weight, fines and sand. Set a target to None to fall back to
+# "lowest site_holdout RMSE among the sets compared here".
+DEPLOYMENT: dict[str, tuple[str, str] | None] = {
+    "cu": ("Extra Trees", "plasticity_chart"),
+    "phi": ("XGBoost", "minimal"),
+}
+# Always compared, for continuity with the original notebooks and the Mv/Cv ablation.
+REFERENCE_SETS = ("full", "no_mvcv")
 
 
 def _jsonable(value: Any) -> Any:
@@ -67,7 +79,9 @@ def run_target(target: str) -> dict[str, Any]:
 
     rows, tuning_rows = [], []
     oof: dict[tuple[str, str, str], np.ndarray] = {}
-    matrices = {fs: build_xy(frame, target, fs) for fs in FEATURE_SETS}
+    pinned = DEPLOYMENT.get(target)
+    feature_sets = list(dict.fromkeys(REFERENCE_SETS + ((pinned[1],) if pinned else ())))
+    matrices = {fs: build_xy(frame, target, fs) for fs in feature_sets}
 
     for feature_set, (X, y, groups) in matrices.items():
         for scheme in SCHEMES:
@@ -100,8 +114,16 @@ def run_target(target: str) -> dict[str, Any]:
     candidates = results[
         (results["Validation"] == SELECTION_SCHEME) & (results["Model"] != BASELINE_NAME)
     ]
-    winner = candidates.sort_values("OOF_RMSE").iloc[0]
-    best_name, best_set = winner["Model"], winner["Feature_Set"]
+    if pinned:
+        best_name, best_set = pinned
+        selected_by = (
+            "fewest required inputs within bootstrap noise of the lowest "
+            f"{SELECTION_SCHEME} RMSE (see training/features_experiment.py)"
+        )
+    else:
+        winner = candidates.sort_values("OOF_RMSE").iloc[0]
+        best_name, best_set = winner["Model"], winner["Feature_Set"]
+        selected_by = f"lowest OOF RMSE under {SELECTION_SCHEME}"
     spec = next(item for item in specs if item.name == best_name)
     X, y, groups = matrices[best_set]
     final_model, best_params = fit_spec(spec, X, y, groups, SELECTION_SCHEME)
@@ -154,7 +176,7 @@ def run_target(target: str) -> dict[str, Any]:
         "target_range": [float(y.min()), float(y.max())],
         "rows": int(len(frame)),
         "sites": int(groups.nunique()),
-        "selected_by": f"lowest OOF RMSE under {SELECTION_SCHEME}",
+        "selected_by": selected_by,
         "metrics": {scheme: metrics_for(scheme) for scheme in SCHEMES},
         "best_params": {key: _jsonable(value) for key, value in best_params.items()},
         "versions": {"scikit-learn": sklearn.__version__, "xgboost": xgboost.__version__},

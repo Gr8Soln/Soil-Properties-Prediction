@@ -3,19 +3,14 @@
   "target_column": "Cu_kPa",
   "model_name": "Extra Trees",
   "model_class": "ExtraTreesRegressor",
-  "feature_set": "no_mvcv",
+  "feature_set": "plasticity_chart",
   "features": [
     "LL",
-    "PL",
+    "PI_calc",
     "Sat_Unit_Wt_kN_m3",
     "Fines_Content_pct",
     "Sand_Fraction_pct",
-    "PI_calc",
-    "LL_to_PL_Ratio",
-    "Plasticity_to_LL",
-    "Coarse_Fraction_pct",
-    "Sand_to_Fines_Ratio",
-    "Density_x_Fines"
+    "A_line_distance"
   ],
   "raw_inputs": [
     "LL",
@@ -52,17 +47,17 @@
   ],
   "rows": 227,
   "sites": 9,
-  "selected_by": "lowest OOF RMSE under site_holdout",
+  "selected_by": "fewest required inputs within bootstrap noise of the lowest site_holdout RMSE (see training/features_experiment.py)",
   "metrics": {
     "site_holdout": {
-      "rmse": 12.8257,
-      "mae": 9.5956,
-      "r2": 0.375
+      "rmse": 12.9085,
+      "mae": 9.736,
+      "r2": 0.3669
     },
     "shuffled_5fold": {
-      "rmse": 8.2776,
-      "mae": 5.5632,
-      "r2": 0.7397
+      "rmse": 8.0778,
+      "mae": 5.5694,
+      "r2": 0.7521
     }
   },
   "best_params": {},

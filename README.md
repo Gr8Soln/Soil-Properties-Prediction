@@ -35,14 +35,14 @@ without the consolidation results Mv and Cv).
 
 ### Deployed models
 
-| Target | Deployed model | Feature set | Unseen site R² / RMSE | Shuffled R² / RMSE |
-|---|---|---|---|---|
-| Cu_kPa | Extra Trees | no_mvcv | 0.38 / 12.83 kPa | 0.74 / 8.28 kPa |
-| Phi_deg | XGBoost | no_mvcv | 0.32 / 3.28° | 0.82 / 1.70° |
+| Target | Deployed model | Feature set | Required inputs | Unseen site R² / RMSE | Shuffled R² / RMSE |
+|---|---|---|---|---|---|
+| Cu_kPa | Extra Trees | plasticity_chart (6 features) | LL, PL, unit weight, fines, sand | 0.37 / 12.91 kPa | 0.75 / 8.08 kPa |
+| Phi_deg | XGBoost | minimal (5 features) | LL, PL, unit weight, fines, sand | 0.26 / 3.42° | 0.76 / 1.94° |
 
-Chosen automatically: lowest RMSE on unseen sites, across both feature sets. Both winners
-happen to be the variants that do **not** use Mv/Cv; the margins over the next candidate
-are small (Cu 0.13 kPa, Phi 0.006°) and should be read as ties.
+Chosen as the simplest feature set within noise of the best unseen-site result (see the
+feature experiment below). The tables underneath compare the original `full` feature set
+and the Mv/Cv-free variant.
 
 ### Cu_kPa — all models (227 rows, 9 sites)
 
@@ -95,6 +95,55 @@ original notebooks. Full table with MAE and per-fold statistics:
 
 Figures: `outputs/figures/`. Interactive walk-through: `notebooks/Model_Comparison.ipynb`.
 
+### Feature-engineering experiment (unseen-site validation only)
+
+Question: do de-duplicated or physically motivated features help? Only two plasticity
+numbers (LL, PI) and two grain fractions are independent, yet the original sets carried 5
+views of LL/PL and a duplicate of fines. Sets tried are defined in
+`app/feature_engineering.py`; code in `training/features_experiment.py`.
+
+**Cu_kPa**
+
+| Feature set | Features | Best model | RMSE (kPa) | Change vs `full` (95% CI) |
+|---|---|---|---|---|
+| `no_mvcv` | 11 | Extra Trees | 12.83 | -0.19 (-2.39 to +1.90) |
+| `plasticity_chart` | 6 | Extra Trees | 12.91 | -0.10 (-2.03 to +1.94) |
+| `log_scaled` | 8 | XGBoost | 12.92 | -0.09 (-1.52 to +1.39) |
+| `full` | 15 | Extra Trees | 13.01 | reference |
+| `physics` | 13 | Extra Trees | 13.23 | +0.22 (-0.25 to +0.53) |
+| `minimal` | 5 | Extra Trees | 13.25 | +0.24 (-1.56 to +2.37) |
+| `minimal_mvcv` | 7 | Extra Trees | 13.55 | +0.54 (-0.06 to +0.87) |
+| `selected` | 7 | Extra Trees | 14.30 | +1.28 (+0.46 to +2.32) |
+
+**Phi_deg**
+
+| Feature set | Features | Best model | RMSE (°) | Change vs `full` (95% CI) |
+|---|---|---|---|---|
+| `physics` | 13 | SVR | 3.18 | -0.10 (-0.58 to +0.66) |
+| `minimal_mvcv` | 7 | Random Forest | 3.20 | -0.08 (-0.44 to +0.47) |
+| `no_mvcv` | 11 | XGBoost | 3.28 | -0.01 (-0.55 to +0.31) |
+| `full` | 14 | Extra Trees | 3.29 | reference |
+| `selected` | 7 | XGBoost | 3.37 | +0.08 (-0.39 to +0.52) |
+| `minimal` | 5 | XGBoost | 3.42 | +0.13 (-0.36 to +0.51) |
+| `log_scaled` | 8 | Random Forest | 3.62 | +0.34 (+0.05 to +0.58) |
+| `plasticity_chart` | 6 | Random Forest | 3.63 | +0.35 (+0.06 to +0.60) |
+
+Findings:
+- Removing the redundancy costs nothing measurable (`minimal`, 5 features, is within noise
+  of the original sets), so fewer inputs are needed.
+- No candidate beats the original sets with statistical confidence; nearly every interval
+  includes zero with only 9 sites. "Best model per set" favours lucky winners.
+- Automatic backward feature selection (done inside each fold, training sites only) was
+  significantly *worse* for Cu: with 8 training sites the choice is too noisy.
+- A-line distance and log transforms were neutral for Cu and worse for Phi.
+- Mv/Cv do not help Cu. For Phi they help slightly once duplicates are removed
+  (`minimal` 3.42° vs `minimal_mvcv` 3.20°), within noise.
+- Liquidity index (needs natural water content) was tested on the only sites that recorded
+  it (3, 4, 7; 102 rows): inconclusive with 3 sites (`outputs/features_li_side_study.csv`).
+  The app does not require water content.
+- Deployment rule used: the model with the fewest required inputs within bootstrap noise of
+  the best, pinned in `training/train.py::DEPLOYMENT`.
+
 ## Project structure
 
 ```
@@ -112,7 +161,7 @@ ui/            React web interface
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/health` | Model and explainer load status |
-| `POST` | `/predict` | Cu and Phi with SHAP explanations and out-of-range warnings |
+| `POST` | `/predict` | Cu and Phi with SHAP explanations and out-of-range warnings (needs only LL, PL, unit weight, fines, sand) |
 | `POST` | `/predict/cu`, `/predict/phi` | Single-target prediction |
 | `POST` | `/explain` | SHAP explanations only |
 | `GET` | `/model-info/cu`, `/model-info/phi` | Comparison table, importances, deployment metadata |

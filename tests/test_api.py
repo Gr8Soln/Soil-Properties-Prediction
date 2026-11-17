@@ -70,4 +70,14 @@ def test_impossible_inputs_are_rejected(client, change):
 def test_model_info_exposes_both_validation_schemes(client):
     body = client.get("/model-info/cu").json()
     assert {row["Validation"] for row in body["cv_comparison"]} == {"site_holdout", "shuffled_5fold"}
-    assert body["deployment"]["selected_by"].endswith("site_holdout")
+    assert "site_holdout" in body["deployment"]["selected_by"]
+
+
+def test_five_core_inputs_are_enough(client):
+    core = {k: PRESETS["default"][k] for k in
+            ("LL", "PL", "Sat_Unit_Wt_kN_m3", "Fines_Content_pct", "Sand_Fraction_pct")}
+    for path in ("/predict", "/predict/cu", "/predict/phi"):
+        assert client.post(path, json=core).status_code == 200, path
+    # ...and the extra fields the current UI still sends are accepted and ignored.
+    assert client.post("/predict", json=PRESETS["default"]).json()["predictions"] == \
+        client.post("/predict", json=core).json()["predictions"]

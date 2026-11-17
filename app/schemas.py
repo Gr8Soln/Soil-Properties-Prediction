@@ -41,7 +41,7 @@ class SoilInputBase(BaseModel):
     def _check_consistency(self) -> "SoilInputBase":
         if self.PL > self.LL:
             raise ValueError("PL must not exceed LL (plasticity index would be negative)")
-        gravel = getattr(self, "Gravel_Fraction_pct", 0.0)
+        gravel = getattr(self, "Gravel_Fraction_pct", None) or 0.0
         total = self.Fines_Content_pct + self.Sand_Fraction_pct + gravel
         if total > 100.5:
             raise ValueError(
@@ -76,7 +76,11 @@ class PhiPredictionRequest(SoilInputBase):
     ``Gravel_to_Sand_Ratio`` interaction term in ``build_phi_features``.
     """
 
-    Gravel_Fraction_pct: float = Field(..., ge=0, le=100, description="Gravel fraction (%)")
+    # Optional: the deployed models derive gradation from fines and sand alone (gravel is
+    # the remainder). Still validated when supplied.
+    Gravel_Fraction_pct: float | None = Field(
+        None, ge=0, le=100, description="Gravel fraction (%)"
+    )
 
 
 class UnifiedPredictionRequest(PhiPredictionRequest):

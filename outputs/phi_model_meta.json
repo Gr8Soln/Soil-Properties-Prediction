@@ -3,27 +3,20 @@
   "target_column": "Phi_deg",
   "model_name": "XGBoost",
   "model_class": "XGBRegressor",
-  "feature_set": "no_mvcv",
+  "feature_set": "minimal",
   "features": [
     "LL",
-    "PL",
+    "PI_calc",
     "Sat_Unit_Wt_kN_m3",
     "Fines_Content_pct",
-    "Sand_Fraction_pct",
-    "PI_calc",
-    "Plasticity_to_LL",
-    "Coarse_Fraction_pct",
-    "Sand_to_Fines_Ratio",
-    "Gravel_to_Sand_Ratio",
-    "Density_x_Sand"
+    "Sand_Fraction_pct"
   ],
   "raw_inputs": [
     "LL",
     "PL",
     "Sat_Unit_Wt_kN_m3",
     "Fines_Content_pct",
-    "Sand_Fraction_pct",
-    "Gravel_Fraction_pct"
+    "Sand_Fraction_pct"
   ],
   "training_ranges": {
     "LL": [
@@ -45,10 +38,6 @@
     "Sand_Fraction_pct": [
       10.600000000000009,
       83.0
-    ],
-    "Gravel_Fraction_pct": [
-      0.0,
-      15.0
     ]
   },
   "target_range": [
@@ -57,17 +46,17 @@
   ],
   "rows": 228,
   "sites": 9,
-  "selected_by": "lowest OOF RMSE under site_holdout",
+  "selected_by": "fewest required inputs within bootstrap noise of the lowest site_holdout RMSE (see training/features_experiment.py)",
   "metrics": {
     "site_holdout": {
-      "rmse": 3.2809,
-      "mae": 2.4994,
-      "r2": 0.3167
+      "rmse": 3.4199,
+      "mae": 2.6165,
+      "r2": 0.2576
     },
     "shuffled_5fold": {
-      "rmse": 1.7038,
-      "mae": 1.1697,
-      "r2": 0.8157
+      "rmse": 1.9364,
+      "mae": 1.3239,
+      "r2": 0.762
     }
   },
   "best_params": {},
